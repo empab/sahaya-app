@@ -1,0 +1,400 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+/* ---------------------------------------------------------------- */
+/* Design Tokens                                                      */
+/* ---------------------------------------------------------------- */
+
+:root {
+  --teal:       #14424A;
+  --teal-dark:  #0C2C31;
+  --teal-tint:  #E4EEEC;
+  --amber:      #D89B3C;
+  --amber-dark: #B87F27;
+  --amber-tint: #FBF0DD;
+  --coral:      #E2583E;
+  --green:      #3F8F5F;
+  --bg:         #F3F6F1;
+  --card:       #FFFFFF;
+  --ink:        #1C2624;
+  --ink-soft:   #5B6B67;
+  --border:     #E1E7DF;
+}
+
+/* ---------------------------------------------------------------- */
+/* Base Reset                                                         */
+/* ---------------------------------------------------------------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+/* ---------------------------------------------------------------- */
+/* Typography helpers                                                 */
+/* ---------------------------------------------------------------- */
+
+.sh-display { font-family: 'Space Grotesk', sans-serif; }
+.sh-mono    { font-family: 'IBM Plex Mono', monospace; }
+
+.sh-h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 21px;
+  margin: 2px 0 3px;
+  letter-spacing: -0.01em;
+}
+.sh-sub { color: var(--ink-soft); font-size: 13px; margin: 0 0 16px; }
+
+/* ---------------------------------------------------------------- */
+/* App Shell                                                          */
+/* ---------------------------------------------------------------- */
+
+.sh-app {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: var(--bg);
+}
+
+/* ---------------------------------------------------------------- */
+/* Landing                                                            */
+/* ---------------------------------------------------------------- */
+
+.sh-landing {
+  background: var(--teal);
+  background-image: radial-gradient(circle at 15% 0%, #1B565F 0%, var(--teal) 55%);
+  border-radius: 24px;
+  padding: 48px 32px 40px;
+  color: #fff;
+  min-height: 560px;
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.sh-brand-mark {
+  width: 56px; height: 56px; border-radius: 50%;
+  border: 2px dashed rgba(255,255,255,0.5);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 18px;
+}
+.sh-landing h1 { font-size: 36px; margin: 0 0 8px; letter-spacing: -0.02em; }
+.sh-landing p.sh-tag {
+  color: rgba(255,255,255,0.72);
+  max-width: 420px;
+  margin: 0 0 40px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.sh-portal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  width: 100%;
+  max-width: 640px;
+}
+.sh-portal-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 16px;
+  padding: 24px 14px;
+  cursor: pointer;
+  transition: all .2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.sh-portal-card:hover {
+  background: rgba(255,255,255,0.13);
+  transform: translateY(-3px);
+  border-color: var(--amber);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+.sh-portal-card .sh-picon {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--amber);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--teal-dark);
+  transition: transform .2s ease;
+}
+.sh-portal-card:hover .sh-picon { transform: scale(1.1); }
+.sh-portal-card b   { font-size: 14.5px; font-family: 'Space Grotesk', sans-serif; }
+.sh-portal-card span { font-size: 11.5px; color: rgba(255,255,255,0.6); }
+.sh-landing-footer { margin-top: 36px; font-size: 12px; color: rgba(255,255,255,0.4); }
+
+/* ---------------------------------------------------------------- */
+/* Phone Frame                                                        */
+/* ---------------------------------------------------------------- */
+
+.sh-phone-wrap { display: flex; justify-content: center; padding: 8px 0; }
+.sh-phone {
+  width: 380px; max-width: 100%;
+  background: var(--bg);
+  border-radius: 34px;
+  border: 8px solid var(--ink);
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(20,66,74,0.3);
+  display: flex; flex-direction: column;
+  height: 720px;
+}
+.sh-statusbar {
+  background: var(--ink); color: #fff; font-size: 12px;
+  padding: 8px 20px 4px;
+  display: flex; justify-content: space-between;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.sh-topbar {
+  background: var(--teal); color: #fff;
+  padding: 16px 18px;
+  display: flex; align-items: center; gap: 10px;
+}
+.sh-topbar b { font-family: 'Space Grotesk', sans-serif; font-size: 16px; flex: 1; }
+.sh-topbar .sh-back { cursor: pointer; display: flex; }
+.sh-body { flex: 1; overflow-y: auto; padding: 16px 16px 8px; }
+.sh-body::-webkit-scrollbar { width: 0; }
+.sh-bottomnav { display: flex; border-top: 1px solid var(--border); background: #fff; }
+.sh-nav-item {
+  flex: 1; padding: 10px 4px 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  color: var(--ink-soft); font-size: 10.5px; cursor: pointer; font-weight: 600;
+  transition: color .15s;
+}
+.sh-nav-item.active { color: var(--teal); }
+
+/* ---------------------------------------------------------------- */
+/* Generic UI primitives                                              */
+/* ---------------------------------------------------------------- */
+
+.sh-field    { margin-bottom: 14px; }
+.sh-label    { font-size: 12px; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px; display: block; }
+.sh-input-wrap { position: relative; }
+.sh-input-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ink-soft); pointer-events: none; }
+.sh-input {
+  width: 100%; border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 11px 12px 11px 38px;
+  font-size: 14px; font-family: 'Inter', sans-serif;
+  background: #fff; outline: none; transition: border-color .15s;
+}
+.sh-input:focus { border-color: var(--teal); }
+.sh-input.sh-input-noicon { padding-left: 12px; }
+
+.sh-btn {
+  border: none; border-radius: 10px; padding: 13px 18px;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: 'Inter', sans-serif; width: 100%;
+  transition: opacity .15s, transform .1s;
+}
+.sh-btn:hover  { opacity: 0.88; }
+.sh-btn:active { transform: scale(0.98); }
+.sh-btn-primary { background: var(--teal); color: #fff; }
+.sh-btn-amber   { background: var(--amber); color: var(--teal-dark); }
+.sh-btn-ghost   { background: var(--teal-tint); color: var(--teal); }
+.sh-btn-danger  { background: #FBE5E0; color: var(--coral); }
+.sh-btn-sm      { padding: 8px 12px; font-size: 12.5px; width: auto; }
+
+.sh-demo-note { font-size: 11.5px; color: var(--ink-soft); text-align: center; margin-top: 14px; line-height: 1.5; }
+
+/* ---------------------------------------------------------------- */
+/* Service patch (icon circle)                                        */
+/* ---------------------------------------------------------------- */
+
+.sh-patch {
+  width: 46px; height: 46px; border-radius: 50%;
+  border: 1.5px dashed var(--amber-dark);
+  background: var(--amber-tint);
+  display: flex; align-items: center; justify-content: center; color: var(--teal);
+  flex-shrink: 0;
+}
+.sh-patch.lg   { width: 58px; height: 58px; }
+.sh-patch.teal { background: var(--teal-tint); border-color: var(--teal); }
+
+/* ---------------------------------------------------------------- */
+/* Service grid                                                       */
+/* ---------------------------------------------------------------- */
+
+.sh-greeting { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+.sh-service-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sh-service-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px;
+  cursor: pointer; transition: border-color .15s, box-shadow .15s;
+}
+.sh-service-card:hover { border-color: var(--teal); box-shadow: 0 4px 12px rgba(20,66,74,0.08); }
+.sh-service-card .sh-patch { margin-bottom: 26px; }
+.sh-service-card b    { display: block; font-size: 14px; font-family: 'Space Grotesk', sans-serif; margin-bottom: 2px; }
+.sh-service-card span { font-size: 11px; color: var(--ink-soft); }
+
+/* ---------------------------------------------------------------- */
+/* Cards                                                              */
+/* ---------------------------------------------------------------- */
+
+.sh-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+.sh-card-row { display: flex; gap: 12px; align-items: flex-start; }
+.sh-card-title { font-family: 'Space Grotesk', sans-serif; font-size: 14.5px; margin: 0 0 2px; }
+.sh-card-meta  { font-size: 12px; color: var(--ink-soft); display: flex; align-items: center; gap: 5px; margin-top: 3px; }
+
+.sh-pill {
+  font-size: 10.5px; font-weight: 700;
+  padding: 4px 9px; border-radius: 20px;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.sh-price { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+
+/* ---------------------------------------------------------------- */
+/* Timeline                                                           */
+/* ---------------------------------------------------------------- */
+
+.sh-timeline { margin: 18px 0; }
+.sh-tl-item  { display: flex; gap: 12px; }
+.sh-tl-dot-col { display: flex; flex-direction: column; align-items: center; }
+.sh-tl-dot  { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sh-tl-line { width: 2px; flex: 1; min-height: 24px; background: var(--border); }
+.sh-tl-content { padding-bottom: 20px; }
+.sh-tl-content b    { font-size: 13px; display: block; }
+.sh-tl-content span { font-size: 11.5px; color: var(--ink-soft); }
+
+/* ---------------------------------------------------------------- */
+/* Admin Dashboard Shell                                              */
+/* ---------------------------------------------------------------- */
+
+.sh-admin-shell {
+  display: flex; border-radius: 20px; overflow: hidden;
+  border: 1px solid var(--border); min-height: 640px;
+  background: var(--card);
+  width: 100%; max-width: 980px;
+}
+.sh-sidebar {
+  width: 210px; background: var(--teal-dark); color: #fff;
+  padding: 22px 14px; display: flex; flex-direction: column; flex-shrink: 0;
+}
+.sh-sidebar .sh-brand-row { display: flex; align-items: center; gap: 9px; padding: 0 8px 24px; }
+.sh-sidebar .sh-brand-row b { font-family: 'Space Grotesk', sans-serif; font-size: 16px; }
+.sh-side-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 9px;
+  font-size: 13.5px; font-weight: 600;
+  color: rgba(255,255,255,0.65); cursor: pointer; margin-bottom: 2px;
+  transition: color .15s, background .15s;
+}
+.sh-side-item.active { background: rgba(255,255,255,0.1); color: #fff; }
+.sh-side-item:hover:not(.active) { color: #fff; }
+.sh-side-footer { margin-top: auto; }
+.sh-admin-main { flex: 1; padding: 26px 30px; overflow-y: auto; max-height: 640px; }
+.sh-admin-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
+
+.sh-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 26px; }
+.sh-kpi-card { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+.sh-kpi-card .sh-kpi-label { font-size: 11.5px; color: var(--ink-soft); font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.sh-kpi-card .sh-kpi-value { font-family: 'Space Grotesk', sans-serif; font-size: 24px; }
+.sh-kpi-card .sh-kpi-delta { font-size: 11.5px; color: var(--green); font-weight: 600; margin-top: 4px; }
+
+.sh-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.sh-table th {
+  text-align: left; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--ink-soft);
+  padding: 0 10px 10px; border-bottom: 1.5px solid var(--border);
+}
+.sh-table td { padding: 12px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.sh-table tr:last-child td { border-bottom: none; }
+.sh-table tr:hover td { background: var(--bg); }
+
+.sh-section-title { font-family: 'Space Grotesk', sans-serif; font-size: 17px; margin: 0 0 3px; }
+.sh-section-sub   { color: var(--ink-soft); font-size: 12.5px; margin: 0 0 18px; }
+
+.sh-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--teal-tint); color: var(--teal);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px; font-family: 'Space Grotesk', sans-serif;
+}
+
+.sh-tab-row { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.sh-tab {
+  padding: 7px 14px; border-radius: 20px;
+  font-size: 12.5px; font-weight: 700; cursor: pointer;
+  background: var(--bg); color: var(--ink-soft); border: 1px solid var(--border);
+  transition: all .15s;
+}
+.sh-tab.active { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+.sh-empty { text-align: center; padding: 40px 10px; color: var(--ink-soft); }
+.sh-empty svg { margin-bottom: 10px; opacity: 0.5; }
+
+.sh-toggle {
+  width: 40px; height: 22px; border-radius: 20px;
+  background: var(--border); position: relative; cursor: pointer; flex-shrink: 0;
+  transition: background .2s;
+}
+.sh-toggle.on { background: var(--green); }
+.sh-toggle::after {
+  content: '';
+  position: absolute; width: 16px; height: 16px;
+  border-radius: 50%; background: #fff;
+  top: 3px; left: 3px; transition: left .2s;
+}
+.sh-toggle.on::after { left: 21px; }
+
+/* ---------------------------------------------------------------- */
+/* Search bar                                                         */
+/* ---------------------------------------------------------------- */
+
+.sh-search-bar {
+  position: relative; margin-bottom: 18px;
+}
+.sh-search-bar svg {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--ink-soft); pointer-events: none;
+}
+.sh-search-bar input {
+  width: 100%; border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 11px 12px 11px 38px;
+  font-size: 14px; font-family: 'Inter', sans-serif;
+  background: #fff; outline: none; transition: border-color .15s;
+}
+.sh-search-bar input:focus { border-color: var(--teal); }
+
+/* ---------------------------------------------------------------- */
+/* Rating stars                                                       */
+/* ---------------------------------------------------------------- */
+
+.sh-stars { display: flex; gap: 6px; justify-content: center; margin: 12px 0; }
+.sh-star  { cursor: pointer; transition: transform .1s; }
+.sh-star:hover { transform: scale(1.2); }
+
+/* ---------------------------------------------------------------- */
+/* Notification badge                                                 */
+/* ---------------------------------------------------------------- */
+
+.sh-badge {
+  background: var(--coral); color: #fff;
+  border-radius: 50%; width: 16px; height: 16px;
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  position: absolute; top: -4px; right: -4px;
+}
+.sh-nav-badge-wrap { position: relative; display: inline-flex; }
+
+/* ---------------------------------------------------------------- */
+/* Animations                                                         */
+/* ---------------------------------------------------------------- */
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.sh-body > * { animation: fadeSlideUp .25s ease; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+.sh-pulse { animation: pulse 1.8s ease-in-out infinite; }
