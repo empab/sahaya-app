@@ -123,7 +123,14 @@ export default function App() {
     }
   }
 
-  const sharedProps = { bookings, updateBooking, providers, updateProvider, addProvider, users, services, addService };
+  async function updateService(id, patch) {
+    const { error } = await supabase.from('services').update(patch).eq('id', id);
+    if (!error) {
+      setServices(prev => prev.map(s => (s.id === id ? { ...s, ...patch } : s)));
+    }
+  }
+
+  const sharedProps = { bookings, updateBooking, providers, updateProvider, addProvider, users, services, addService, updateService };
 
   if (isLoading) return <div style={{padding: 40}}>Loading App Data...</div>;
 

@@ -19,7 +19,7 @@ const SIDEBAR_ITEMS = [
 
 
 
-export default function AdminApp({ providers, bookings, users, services, updateBooking, updateProvider, addProvider, addService, onExit }) {
+export default function AdminApp({ providers, bookings, users, services, updateBooking, updateProvider, addProvider, addService, updateService, onExit }) {
   const [authed,         setAuthed]         = useState(false);
   const [section,        setSection]        = useState('dashboard');
   const [bookingFilter,  setBookingFilter]  = useState('all');
@@ -29,6 +29,7 @@ export default function AdminApp({ providers, bookings, users, services, updateB
   const [newProvider, setNewProvider] = useState({ name: '', phone: '', email: '', address: '', aadhaar_number: '', skill: 'House Help' });
   const [showCreateService, setShowCreateService] = useState(false);
   const [newService, setNewService] = useState({ name: '', price: '', skill: '' });
+  const [editingService, setEditingService] = useState(null);
 
   function handleCreateProvider(e) {
     e.preventDefault();
@@ -48,6 +49,17 @@ export default function AdminApp({ providers, bookings, users, services, updateB
     });
     setShowCreateService(false);
     setNewService({ name: '', price: '', skill: '' });
+  }
+
+  function handleUpdateService(e) {
+    e.preventDefault();
+    if (!editingService) return;
+    updateService(editingService.id, {
+      name: editingService.name,
+      price: parseInt(editingService.price) || 0,
+      skill: editingService.skill
+    });
+    setEditingService(null);
   }
 
   /* ---- All derived values & hooks must come BEFORE any early returns ---- */
@@ -432,6 +444,13 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                     <td>{s.bookings}</td>
                     <td>
                       <span className="sh-pill" style={{ background: 'var(--green)22', color: 'var(--green)' }}>Active</span>
+                      <button 
+                        className="sh-btn sh-btn-sm sh-btn-ghost" 
+                        style={{ marginLeft: 10, padding: '4px 8px' }}
+                        onClick={() => setEditingService(s)}
+                      >
+                        Edit
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -578,6 +597,23 @@ function Sidebar({ section, setSection, onExit }) {
               <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
                 <button type="submit" className="sh-btn sh-btn-primary">Add Service</button>
                 <button type="button" className="sh-btn" onClick={() => setShowCreateService(false)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingService && (
+        <div className="sh-modal-backdrop">
+          <div className="sh-modal">
+            <h2 className="sh-section-title">Edit Service</h2>
+            <form onSubmit={handleUpdateService} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20 }}>
+              <input className="sh-input" placeholder="Service Name (e.g. Sofa Cleaning)" required value={editingService.name} onChange={e => setEditingService({...editingService, name: e.target.value})} />
+              <input className="sh-input" placeholder="Price (₹)" type="number" required value={editingService.price} onChange={e => setEditingService({...editingService, price: e.target.value})} />
+              <input className="sh-input" placeholder="Category Skill (e.g. Cleaning)" required value={editingService.skill} onChange={e => setEditingService({...editingService, skill: e.target.value})} />
+              <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                <button type="submit" className="sh-btn sh-btn-primary">Save Changes</button>
+                <button type="button" className="sh-btn" onClick={() => setEditingService(null)}>Cancel</button>
               </div>
             </form>
           </div>
