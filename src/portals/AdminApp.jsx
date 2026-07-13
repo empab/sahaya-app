@@ -71,7 +71,14 @@ export default function AdminApp({ providers, bookings, users, updateBooking, up
           roleLabel="Admin panel"
           RoleIcon={Shield}
           hint="Oversee bookings, providers and platform performance."
-          onLogin={() => setAuthed(true)}
+          isEmail={true}
+          onLogin={(id, pwd) => {
+            if (id === 'empabgroup@gmail.com' && pwd === 'Sahaya@2027') {
+              setAuthed(true);
+              return true;
+            }
+            return false;
+          }}
           onExit={onExit}
         />
       </div>
