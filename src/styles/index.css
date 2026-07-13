@@ -269,10 +269,11 @@ body {
 /* ---------------------------------------------------------------- */
 
 .sh-admin-shell {
-  display: flex; border-radius: 20px; overflow: hidden;
-  border: 1px solid var(--border); min-height: 640px;
+  display: flex; overflow: hidden;
+  border: none; min-height: 100vh;
   background: var(--card);
-  width: 100%; max-width: 980px;
+  width: 100%; max-width: 100%;
+  border-radius: 0;
 }
 .sh-sidebar {
   width: 210px; background: var(--teal-dark); color: #fff;
@@ -290,7 +291,7 @@ body {
 .sh-side-item.active { background: rgba(255,255,255,0.1); color: #fff; }
 .sh-side-item:hover:not(.active) { color: #fff; }
 .sh-side-footer { margin-top: auto; }
-.sh-admin-main { flex: 1; padding: 26px 30px; overflow-y: auto; max-height: 640px; }
+.sh-admin-main { flex: 1; padding: 26px 30px; overflow-y: auto; max-height: 100vh; }
 .sh-admin-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
 
 .sh-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 26px; }
