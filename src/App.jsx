@@ -87,7 +87,25 @@ export default function App() {
     }
   }
 
-  const sharedProps = { bookings, updateBooking, providers, updateProvider, users };
+  async function addProvider(p) {
+    const { data, error } = await supabase.from('providers').insert({
+      name: p.name,
+      skill: p.skill,
+      phone: p.phone,
+      address: p.address,
+      email: p.email,
+      aadhaar_number: p.aadhaar_number,
+      rating: 0,
+      jobs: 0,
+      status: 'pending',
+    }).select();
+
+    if (!error && data && data.length > 0) {
+      setProviders(prev => [data[0], ...prev]);
+    }
+  }
+
+  const sharedProps = { bookings, updateBooking, providers, updateProvider, addProvider, users };
 
   if (isLoading) return <div style={{padding: 40}}>Loading App Data...</div>;
 
