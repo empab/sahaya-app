@@ -54,10 +54,11 @@ body {
 
 .sh-app {
   min-height: 100vh;
+  width: 100%;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
-  padding: 24px 16px;
+  padding: 0;
   background: var(--bg);
 }
 
@@ -68,15 +69,16 @@ body {
 .sh-landing {
   background: var(--teal);
   background-image: radial-gradient(circle at 15% 0%, #1B565F 0%, var(--teal) 55%);
-  border-radius: 24px;
-  padding: 48px 32px 40px;
+  border-radius: 0;
+  padding: 80px 32px 40px;
   color: #fff;
-  min-height: 560px;
+  min-height: 100vh;
   width: 100%;
-  max-width: 700px;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
 }
 .sh-brand-mark {
