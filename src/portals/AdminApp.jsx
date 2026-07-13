@@ -113,7 +113,7 @@ export default function AdminApp({ providers, bookings, users, updateBooking, up
             </div>
             <div className="sh-kpi-card">
               <div className="sh-kpi-label"><Wallet size={13} /> Earnings</div>
-              <div className="sh-kpi-value">₹{p.earnings.toLocaleString('en-IN')}</div>
+              <div className="sh-kpi-value">₹{(p.earnings || 0).toLocaleString('en-IN')}</div>
             </div>
           </div>
 
@@ -342,7 +342,7 @@ export default function AdminApp({ providers, bookings, users, updateBooking, up
                     <td>{p.skill}</td>
                     <td><Star size={12} style={{ verticalAlign: -2 }} /> {p.rating}</td>
                     <td>{p.jobs}</td>
-                    <td className="sh-price">₹{p.earnings.toLocaleString('en-IN')}</td>
+                    <td className="sh-price">₹{(p.earnings || 0).toLocaleString('en-IN')}</td>
                     <td>
                       <span className="sh-pill" style={{ background: 'var(--green)22', color: 'var(--green)' }}>
                         <ShieldCheck size={11} /> Verified
@@ -419,69 +419,9 @@ export default function AdminApp({ providers, bookings, users, updateBooking, up
           </>
         )}
       </div>
-
-      {/* Create Provider Modal */}
-      {showCreateProvider && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
-        }}>
-          <div className="sh-card" style={{ width: '100%', maxWidth: 450, padding: 24, animation: 'fadeSlideUp 0.25s ease' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Create New Provider</h3>
-              <button className="sh-btn sh-btn-ghost sh-btn-sm" style={{ padding: 4 }} onClick={() => setShowCreateProvider(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            
-            <form onSubmit={handleCreateProvider} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Full Name</label>
-                <input required type="text" className="sh-input" value={newProvider.name} onChange={e => setNewProvider({...newProvider, name: e.target.value})} />
-              </div>
-              
-              <div style={{ display: 'flex', gap: 16 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                  <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Phone Number</label>
-                  <input required type="tel" className="sh-input" value={newProvider.phone} onChange={e => setNewProvider({...newProvider, phone: e.target.value})} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                  <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Primary Skill</label>
-                  <select className="sh-input" value={newProvider.skill} onChange={e => setNewProvider({...newProvider, skill: e.target.value})}>
-                    {[...new Set(SERVICES.map(s => s.skill))].map(skill => (
-                      <option key={skill} value={skill}>{skill}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Email Address</label>
-                <input required type="email" className="sh-input" value={newProvider.email} onChange={e => setNewProvider({...newProvider, email: e.target.value})} />
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Aadhaar Number</label>
-                <input required type="text" className="sh-input" placeholder="XXXX XXXX XXXX" value={newProvider.aadhaar_number} onChange={e => setNewProvider({...newProvider, aadhaar_number: e.target.value})} />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Physical Address</label>
-                <textarea required className="sh-input" style={{ minHeight: 60, resize: 'vertical' }} value={newProvider.address} onChange={e => setNewProvider({...newProvider, address: e.target.value})} />
-              </div>
-
-              <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                <button type="button" className="sh-btn sh-btn-ghost" onClick={() => setShowCreateProvider(false)}>Cancel</button>
-                <button type="submit" className="sh-btn sh-btn-primary">Save Provider</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
-
 
 /* ---------- Sub-components ---------- */
 
@@ -506,11 +446,9 @@ function Sidebar({ section, setSection, onExit }) {
       <div className="sh-side-footer">
         <div className="sh-side-item" onClick={onExit}><LogOut size={16} /> Exit demo</div>
       </div>
-
     </div>
   );
 }
-
 
 function KpiCard({ icon, label, value, delta, sparkData, sparkColor }) {
   return (
@@ -525,69 +463,9 @@ function KpiCard({ icon, label, value, delta, sparkData, sparkColor }) {
           <Sparkline data={sparkData} color={sparkColor} />
         )}
       </div>
-
-      {/* Create Provider Modal */}
-      {showCreateProvider && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
-        }}>
-          <div className="sh-card" style={{ width: '100%', maxWidth: 450, padding: 24, animation: 'fadeSlideUp 0.25s ease' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Create New Provider</h3>
-              <button className="sh-btn sh-btn-ghost sh-btn-sm" style={{ padding: 4 }} onClick={() => setShowCreateProvider(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            
-            <form onSubmit={handleCreateProvider} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Full Name</label>
-                <input required type="text" className="sh-input" value={newProvider.name} onChange={e => setNewProvider({...newProvider, name: e.target.value})} />
-              </div>
-              
-              <div style={{ display: 'flex', gap: 16 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                  <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Phone Number</label>
-                  <input required type="tel" className="sh-input" value={newProvider.phone} onChange={e => setNewProvider({...newProvider, phone: e.target.value})} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                  <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Primary Skill</label>
-                  <select className="sh-input" value={newProvider.skill} onChange={e => setNewProvider({...newProvider, skill: e.target.value})}>
-                    {[...new Set(SERVICES.map(s => s.skill))].map(skill => (
-                      <option key={skill} value={skill}>{skill}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Email Address</label>
-                <input required type="email" className="sh-input" value={newProvider.email} onChange={e => setNewProvider({...newProvider, email: e.target.value})} />
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Aadhaar Number</label>
-                <input required type="text" className="sh-input" placeholder="XXXX XXXX XXXX" value={newProvider.aadhaar_number} onChange={e => setNewProvider({...newProvider, aadhaar_number: e.target.value})} />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Physical Address</label>
-                <textarea required className="sh-input" style={{ minHeight: 60, resize: 'vertical' }} value={newProvider.address} onChange={e => setNewProvider({...newProvider, address: e.target.value})} />
-              </div>
-
-              <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                <button type="button" className="sh-btn sh-btn-ghost" onClick={() => setShowCreateProvider(false)}>Cancel</button>
-                <button type="submit" className="sh-btn sh-btn-primary">Save Provider</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
-
 
 function Sparkline({ data, color }) {
   const w = 70, h = 32;
