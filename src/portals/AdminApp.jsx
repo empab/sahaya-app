@@ -324,12 +324,23 @@ export default function AdminApp({ providers, bookings, users, updateBooking, up
             <table className="sh-table">
               <thead>
                 <tr>
-                  <th>Provider</th><th>Skill</th><th>Rating</th>
-                  <th>Jobs done</th><th>Earnings</th><th>Status</th><th></th>
+                  <th>Provider</th>
+                  <th>Active Status</th>
+                  <th>Price Added</th>
+                  <th>Total Attended Works</th>
+                  <th>Skill 1</th>
+                  <th>Skill 2</th>
+                  <th>Skill 3</th>
+                  <th>Skill 4</th>
+                  <th>Our Rating</th>
+                  <th>Status</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                {providers.filter(p => p.status === 'approved').map(p => (
+                {providers.filter(p => p.status === 'approved').map(p => {
+                  const skills = (p.skill || '').split(',').map(s => s.trim());
+                  return (
                   <tr key={p.id} style={{ cursor: 'pointer' }} onClick={() => setProviderDetail(p.id)}>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -339,10 +350,20 @@ export default function AdminApp({ providers, bookings, users, updateBooking, up
                         {p.name}
                       </div>
                     </td>
-                    <td>{p.skill}</td>
-                    <td><Star size={12} style={{ verticalAlign: -2 }} /> {p.rating}</td>
-                    <td>{p.jobs}</td>
-                    <td className="sh-price">₹{(p.earnings || 0).toLocaleString('en-IN')}</td>
+                    <td>
+                      {p.is_available ? (
+                        <span className="sh-pill" style={{ background: 'var(--green)22', color: 'var(--green)' }}>Active</span>
+                      ) : (
+                        <span className="sh-pill" style={{ background: '#f1f3f5', color: '#868e96' }}>Inactive</span>
+                      )}
+                    </td>
+                    <td className="sh-price">₹{p.charge || 0}</td>
+                    <td>{p.jobs || 0}</td>
+                    <td>{skills[0] || '-'}</td>
+                    <td>{skills[1] || '-'}</td>
+                    <td>{skills[2] || '-'}</td>
+                    <td>{skills[3] || '-'}</td>
+                    <td><Star size={12} style={{ verticalAlign: -2, color: 'var(--orange)' }} /> {p.rating || '0.0'}</td>
                     <td>
                       <span className="sh-pill" style={{ background: 'var(--green)22', color: 'var(--green)' }}>
                         <ShieldCheck size={11} /> Verified
@@ -350,7 +371,7 @@ export default function AdminApp({ providers, bookings, users, updateBooking, up
                     </td>
                     <td><ChevronRight size={14} color="var(--ink-soft)" /></td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </>
