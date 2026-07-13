@@ -35,12 +35,24 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Restore last portal from localStorage
+    const savedPortal = localStorage.getItem('sh_portal');
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      // If user has an active session and was in the user portal, restore it
+      if (session && savedPortal === 'user') {
+        setPortal('user');
+      }
     });
 
-    const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+      // When user signs out, go back to landing
+      if (event === 'SIGNED_OUT') {
+        setPortal('landing');
+        localStorage.removeItem('sh_portal');
+      }
     });
 
     const dbSub = supabase.channel('schema-db-changes')
@@ -173,16 +185,22 @@ export default function App() {
 
   if (isLoading) return <div style={{padding: 40}}>Loading App Data...</div>;
 
+  function goPortal(name) {
+    setPortal(name);
+    if (name === 'user') localStorage.setItem('sh_portal', 'user');
+    else localStorage.removeItem('sh_portal');
+  }
+
   return (
     <div className="sh-app">
       {portal === 'landing' && (
-        <Landing onSelect={setPortal} />
+        <Landing onSelect={goPortal} />
       )}
       {portal === 'user' && (
         <UserApp
           {...sharedProps}
           addBooking={addBooking}
-          onExit={() => setPortal('landing')}
+          onExit={() => { localStorage.removeItem('sh_portal'); setPortal('landing'); }}
         />
       )}
       {portal === 'provider' && (
