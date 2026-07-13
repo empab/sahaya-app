@@ -19,7 +19,7 @@ const SIDEBAR_ITEMS = [
 
 
 
-export default function AdminApp({ providers, bookings, users, updateBooking, updateProvider, addProvider, onExit }) {
+export default function AdminApp({ providers, bookings, users, services, updateBooking, updateProvider, addProvider, addService, onExit }) {
   const [authed,         setAuthed]         = useState(false);
   const [section,        setSection]        = useState('dashboard');
   const [bookingFilter,  setBookingFilter]  = useState('all');
@@ -27,12 +27,27 @@ export default function AdminApp({ providers, bookings, users, updateBooking, up
   const [providerDetail, setProviderDetail] = useState(null);
   const [showCreateProvider, setShowCreateProvider] = useState(false);
   const [newProvider, setNewProvider] = useState({ name: '', phone: '', email: '', address: '', aadhaar_number: '', skill: 'House Help' });
+  const [showCreateService, setShowCreateService] = useState(false);
+  const [newService, setNewService] = useState({ name: '', price: '', skill: '' });
 
   function handleCreateProvider(e) {
     e.preventDefault();
     addProvider(newProvider);
     setShowCreateProvider(false);
     setNewProvider({ name: '', phone: '', email: '', address: '', aadhaar_number: '', skill: 'House Help' });
+  }
+
+  function handleCreateService(e) {
+    e.preventDefault();
+    addService({
+      name: newService.name,
+      price: parseInt(newService.price) || 0,
+      skill: newService.skill,
+      desc: '',
+      icon_name: 'home_repair_service'
+    });
+    setShowCreateService(false);
+    setNewService({ name: '', price: '', skill: '' });
   }
 
   /* ---- All derived values & hooks must come BEFORE any early returns ---- */
@@ -387,19 +402,27 @@ export default function AdminApp({ providers, bookings, users, updateBooking, up
         {/* ---- SERVICES ---- */}
         {section === 'services' && (
           <>
-            <h2 className="sh-section-title">Services</h2>
-            <p className="sh-section-sub">Categories customers can book from the home screen</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h2 className="sh-section-title">Services</h2>
+                <p className="sh-section-sub">Categories customers can book from the home screen</p>
+              </div>
+              <button className="sh-btn sh-btn-primary" onClick={() => setShowCreateService(true)}>
+                + Create Service
+              </button>
+            </div>
+            
             <table className="sh-table">
               <thead>
                 <tr><th>Service</th><th>Category skill</th><th>Starting price</th><th>Bookings</th><th></th></tr>
               </thead>
               <tbody>
-                {SERVICES.map(s => (
+                {services.map(s => (
                   <tr key={s.id}>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div className="sh-patch" style={{ width: 30, height: 30 }}>
-                          <s.icon size={15} color="var(--teal)" />
+                          <LayoutGrid size={15} color="var(--teal)" />
                         </div>
                         {s.name}
                       </div>
@@ -543,6 +566,23 @@ function Sidebar({ section, setSection, onExit }) {
       <div className="sh-side-footer">
         <div className="sh-side-item" onClick={onExit}><LogOut size={16} /> Exit demo</div>
       </div>
+    </div>
+      {showCreateService && (
+        <div className="sh-modal-backdrop">
+          <div className="sh-modal">
+            <h2 className="sh-section-title">Create New Service</h2>
+            <form onSubmit={handleCreateService} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20 }}>
+              <input className="sh-input" placeholder="Service Name (e.g. Sofa Cleaning)" required value={newService.name} onChange={e => setNewService({...newService, name: e.target.value})} />
+              <input className="sh-input" placeholder="Price (₹)" type="number" required value={newService.price} onChange={e => setNewService({...newService, price: e.target.value})} />
+              <input className="sh-input" placeholder="Category Skill (e.g. Cleaning)" required value={newService.skill} onChange={e => setNewService({...newService, skill: e.target.value})} />
+              <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                <button type="submit" className="sh-btn sh-btn-primary">Add Service</button>
+                <button type="button" className="sh-btn" onClick={() => setShowCreateService(false)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

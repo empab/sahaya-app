@@ -29,6 +29,7 @@ export default function App() {
   const [portal,    setPortal]    = useState('landing');
   const [providers, setProviders] = useState([]);
   const [bookings,  setBookings]  = useState([]);
+  const [services,  setServices]  = useState([]);
   const [users]                   = useState(INITIAL_USERS);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -38,15 +39,17 @@ export default function App() {
 
   async function fetchData() {
     setIsLoading(true);
-    const [pRes, bRes] = await Promise.all([
+    const [pRes, bRes, sRes] = await Promise.all([
       supabase.from('providers').select('*'),
-      supabase.from('bookings').select('*').order('created_at', { ascending: false })
+      supabase.from('bookings').select('*').order('created_at', { ascending: false }),
+      supabase.from('services').select('*').order('id', { ascending: true })
     ]);
 
     if (!pRes.error) setProviders(pRes.data);
     if (!bRes.error) {
       setBookings(bRes.data.map(transformBooking));
     }
+    if (!sRes.error) setServices(sRes.data);
     setIsLoading(false);
   }
 
@@ -105,7 +108,22 @@ export default function App() {
     }
   }
 
-  const sharedProps = { bookings, updateBooking, providers, updateProvider, addProvider, users };
+  async function addService(s) {
+    const { data, error } = await supabase.from('services').insert({
+      name: s.name,
+      icon_name: s.icon_name || 'home_repair_service',
+      bookings: s.bookings || '0+',
+      price: s.price,
+      skill: s.skill,
+      desc: s.desc
+    }).select();
+    
+    if (!error && data && data.length > 0) {
+      setServices(prev => [...prev, data[0]]);
+    }
+  }
+
+  const sharedProps = { bookings, updateBooking, providers, updateProvider, addProvider, users, services, addService };
 
   if (isLoading) return <div style={{padding: 40}}>Loading App Data...</div>;
 
