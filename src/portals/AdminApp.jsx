@@ -20,7 +20,7 @@ const SIDEBAR_ITEMS = [
 
 
 export default function AdminApp({ providers, bookings, users, services, updateBooking, updateProvider, addProvider, addService, updateService, onExit }) {
-  const [authed,         setAuthed]         = useState(false);
+  const [authed,         setAuthed]         = useState(() => localStorage.getItem('sh_admin_auth') === 'true');
   const [section,        setSection]        = useState('dashboard');
   const [bookingFilter,  setBookingFilter]  = useState('all');
   const [bookingSearch,  setBookingSearch]  = useState('');
@@ -102,6 +102,7 @@ export default function AdminApp({ providers, bookings, users, services, updateB
           onLogin={(id, pwd) => {
             if (id === 'empabgroup@gmail.com' && pwd === 'Sahaya@2027') {
               setAuthed(true);
+              localStorage.setItem('sh_admin_auth', 'true');
               return true;
             }
             return false;

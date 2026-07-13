@@ -198,8 +198,11 @@ export default function App() {
 
   function goPortal(name) {
     setPortal(name);
-    if (name === 'user') localStorage.setItem('sh_portal', 'user');
-    else localStorage.removeItem('sh_portal');
+    if (name !== 'landing') {
+      localStorage.setItem('sh_portal', name);
+    } else {
+      localStorage.removeItem('sh_portal');
+    }
   }
 
   return (
@@ -217,13 +220,13 @@ export default function App() {
       {portal === 'provider' && (
         <ProviderApp
           {...sharedProps}
-          onExit={() => setPortal('landing')}
+          onExit={() => { localStorage.removeItem('sh_portal'); setPortal('landing'); }}
         />
       )}
       {portal === 'admin' && (
         <AdminApp
           {...sharedProps}
-          onExit={() => setPortal('landing')}
+          onExit={() => { localStorage.removeItem('sh_portal'); localStorage.removeItem('sh_admin_auth'); setPortal('landing'); }}
         />
       )}
     </div>
