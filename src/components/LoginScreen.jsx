@@ -7,7 +7,8 @@ export default function LoginScreen({ roleLabel, hint, RoleIcon, onLogin, onExit
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = (e) => {
+    e.preventDefault();
     setError('');
     // Pass credentials to parent. If parent returns false, show an error.
     const success = onLogin(id, password);
@@ -26,28 +27,30 @@ export default function LoginScreen({ roleLabel, hint, RoleIcon, onLogin, onExit
       
       {error && <div style={{ color: 'red', fontSize: 13, marginBottom: 10, fontWeight: 600 }}>{error}</div>}
 
-      <Field
-        label={isEmail ? "Email Address" : "Phone number"}
-        icon={isEmail ? Mail : Phone}
-        placeholder={isEmail ? "admin@example.com" : "98650 xxxxx"}
-        value={id}
-        onChange={e => setId(e.target.value)}
-      />
-      <Field 
-        label="Password" 
-        icon={Lock} 
-        type="password" 
-        placeholder="••••••••" 
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-      />
-      <button className="sh-btn sh-btn-primary" style={{ marginTop: 6 }} onClick={handleLogin}>
-        Log in
-      </button>
+      <form onSubmit={handleLogin}>
+        <Field
+          label={isEmail ? "Email Address" : "Phone number"}
+          icon={isEmail ? Mail : Phone}
+          placeholder={isEmail ? "admin@example.com" : "98650 xxxxx"}
+          value={id}
+          onChange={e => setId(e.target.value)}
+        />
+        <Field 
+          label="Password" 
+          icon={Lock} 
+          type="password" 
+          placeholder="••••••••" 
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+        />
+        <button type="submit" className="sh-btn sh-btn-primary" style={{ marginTop: 6 }}>
+          Log in
+        </button>
+      </form>
       {!isEmail && <p className="sh-demo-note">This is a prototype — any details will log you in as a demo account.</p>}
       {onExit && (
         <div style={{ marginTop: 14 }}>
-          <button className="sh-btn sh-btn-ghost" onClick={onExit}>
+          <button type="button" className="sh-btn sh-btn-ghost" onClick={onExit}>
             <ArrowLeft size={15} /> Back to portal picker
           </button>
         </div>
