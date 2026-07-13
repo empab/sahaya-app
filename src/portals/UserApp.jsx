@@ -14,6 +14,15 @@ import { supabase } from '../lib/supabase.js';
 
 const TIMELINE_STEPS = ['pending', 'assigned', 'confirmed', 'in_progress', 'completed'];
 
+const STATUS_META = {
+  pending:     { label: 'Finding a provider',    color: 'var(--amber)' },
+  assigned:    { label: 'Awaiting confirmation', color: 'var(--amber)' },
+  confirmed:   { label: 'Confirmed',             color: 'var(--teal)' },
+  in_progress: { label: 'In progress',           color: 'var(--coral)' },
+  completed:   { label: 'Completed',             color: 'var(--green)' },
+  cancelled:   { label: 'Cancelled',             color: '#94A099' },
+};
+
 /* ---------- Rating Modal ---------- */
 function RatingModal({ booking, onSubmit, onClose }) {
   const [stars, setStars] = useState(0);
@@ -75,26 +84,30 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
   const [tab,      setTab]      = useState('home');
   const [service,  setService]  = useState(null);
   const [query,    setQuery]    = useState('');
-  const [bookingForm, setBookingForm] = useState({ date: '13 Jul', time: '10:00 AM', address: '', notes: '' });
+  const [bookingForm, setBookingForm] = useState({ date: '', time: '10:00 AM', address: '', notes: '' });
   const [selectedBookingId, setSelectedBookingId] = useState(null);
   const [ratingBookingId,   setRatingBookingId]   = useState(null);
-  const [notifications, setNotifications]         = useState([
-    { id: 1, text: 'Your Electrical booking is confirmed!', time: '10 min ago', read: false },
-    { id: 2, text: 'Rajesh Kumar accepted your job.',       time: '1 hr ago',   read: false },
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
-  const userEmail = session?.user?.email;
-  const userName  = userEmail ? userEmail.split('@')[0] : '';
-  const myBookings    = bookings.filter(b => b.customerName === userEmail).sort((a, b) => b.id - a.id);
-  const unreadCount   = notifications.filter(n => !n.read).length;
-  const filteredSvcs  = services.filter(s => s.name.toLowerCase().includes(query.toLowerCase()));
+  // Get user info from real Supabase session
+  const userEmail   = session?.user?.email || '';
+  const userInitials = userEmail ? userEmail.slice(0, 2).toUpperCase() : '?';
+  const displayName = userEmail ? userEmail.split('@')[0] : 'Guest';
+
+  // Filter bookings to only this user's bookings
+  const myBookings  = bookings.filter(b => b.customerName === userEmail).sort((a, b) => b.id - a.id);
+  const unreadCount = notifications.filter(n => !n.read).length;
+  const filteredSvcs = (services || []).filter(s => s.name.toLowerCase().includes(query.toLowerCase()));
   const ratingBooking = ratingBookingId ? bookings.find(b => b.id === ratingBookingId) : null;
+
+  // Get today's date nicely formatted
+  const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 
   function goTab(key) { setTab(key); setScreen(key); }
 
   function openService(s) {
     setService(s);
-    setBookingForm({ date: '13 Jul', time: '10:00 AM', address: '', notes: '' });
+    setBookingForm({ date: today, time: '10:00 AM', address: '', notes: '' });
     setScreen('detail');
   }
 
@@ -103,15 +116,15 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
       serviceId:    service.id,
       serviceName:  service.name,
       customerName: userEmail,
-      phone:        'N/A', // Collected later or via profile
-      address:      bookingForm.address || 'My Address',
-      date:         bookingForm.date,
+      phone:        'N/A',
+      address:      bookingForm.address || 'Address not specified',
+      date:         bookingForm.date || today,
       time:         bookingForm.time,
       price:        service.price,
       notes:        bookingForm.notes,
       status:       'pending',
       providerId:   null,
-      createdAt:    'Just now',
+      createdAt:    new Date().toISOString(),
     });
     setScreen('confirmed');
   }
@@ -125,6 +138,11 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   }
 
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    onExit();
+  }
+
   const handleSendOtp = async (email) => {
     return supabase.auth.signInWithOtp({
       email,
@@ -136,7 +154,7 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
     return supabase.auth.verifyOtp({
       email,
       token,
-      type: 'magiclink' // Verify OTP code sent via magiclink
+      type: 'email'
     });
   };
 
@@ -189,8 +207,8 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
           <>
             <div className="sh-greeting">
               <div>
-                <p className="sh-sub" style={{ marginBottom: 2 }}>Good afternoon,</p>
-                <h2 className="sh-h1" style={{ margin: 0 }}>{CURRENT_USER.name.split(' ')[0]} 👋</h2>
+                <p className="sh-sub" style={{ marginBottom: 2 }}>Good day,</p>
+                <h2 className="sh-h1" style={{ margin: 0 }}>{displayName} 👋</h2>
               </div>
               <div
                 className="sh-patch teal"
@@ -221,16 +239,21 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
             {filteredSvcs.length === 0 && (
               <div className="sh-empty">
                 <Search size={28} />
-                <p>No services matched "{query}"</p>
+                <p>{query ? `No services matched "${query}"` : 'No services available yet.'}</p>
               </div>
             )}
 
             <div className="sh-service-grid">
               {filteredSvcs.map(s => (
                 <div className="sh-service-card" key={s.id} onClick={() => openService(s)}>
-                  <div className="sh-patch"><s.icon size={20} color="var(--teal)" /></div>
+                  <div className="sh-patch">
+                    {s.icon
+                      ? React.createElement(s.icon, { size: 20, color: 'var(--teal)' })
+                      : <LayoutGrid size={20} color="var(--teal)" />
+                    }
+                  </div>
                   <b>{s.name}</b>
-                  <span>{s.bookings} Bookings</span>
+                  <span>₹{s.price}</span>
                 </div>
               ))}
             </div>
@@ -241,7 +264,10 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
         {screen === 'detail' && service && (
           <>
             <div className="sh-patch lg" style={{ marginBottom: 14 }}>
-              <service.icon size={26} color="var(--teal)" />
+              {service.icon
+                ? React.createElement(service.icon, { size: 26, color: 'var(--teal)' })
+                : <LayoutGrid size={26} color="var(--teal)" />
+              }
             </div>
             <h2 className="sh-h1">{service.name}</h2>
             <p className="sh-sub">{service.desc}</p>
@@ -251,7 +277,7 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
                 <div className="sh-price" style={{ fontSize: 18 }}>₹{service.price}</div>
               </div>
               <span className="sh-pill" style={{ background: 'var(--teal-tint)', color: 'var(--teal)' }}>
-                <Star size={11} /> {service.bookings} booked
+                <Star size={11} /> {service.skill}
               </span>
             </div>
             <button className="sh-btn sh-btn-primary" style={{ marginTop: 6 }} onClick={() => setScreen('booking')}>
@@ -270,7 +296,7 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
               onChange={e => setBookingForm({ ...bookingForm, date: e.target.value })} />
             <Field label="Preferred time" icon={Clock} value={bookingForm.time}
               onChange={e => setBookingForm({ ...bookingForm, time: e.target.value })} />
-            <Field label="Address" icon={MapPin} placeholder="4B Palm Residency, Kondotty"
+            <Field label="Address" icon={MapPin} placeholder="Enter your full address"
               value={bookingForm.address}
               onChange={e => setBookingForm({ ...bookingForm, address: e.target.value })} />
             <div className="sh-field">
@@ -296,7 +322,7 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
             </div>
             <h2 className="sh-h1">Booking requested!</h2>
             <p className="sh-sub">
-              We're finding a verified {service.skill.toLowerCase()} provider for you.
+              We're finding a verified {service.skill?.toLowerCase()} provider for you.
               You'll get a notification once someone accepts.
             </p>
             <button className="sh-btn sh-btn-primary" onClick={() => goTab('bookings')}>
@@ -323,7 +349,7 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
               >
                 <div className="sh-card-row">
                   <div className="sh-patch">
-                    {React.createElement(serviceFor(b)?.icon || 'span', { size: 19, color: 'var(--teal)' })}
+                    <LayoutGrid size={19} color="var(--teal)" />
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -360,7 +386,7 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
               <div className="sh-card">
                 <div className="sh-card-row">
                   <div className="sh-patch">
-                    {React.createElement(serviceFor(b)?.icon || 'span', { size: 19, color: 'var(--teal)' })}
+                    <LayoutGrid size={19} color="var(--teal)" />
                   </div>
                   <div>
                     <p className="sh-card-title">{b.serviceName}</p>
@@ -372,21 +398,21 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
 
               {/* Timeline */}
               <div className="sh-timeline">
-                {TIMELINE_STEPS.map((s, i) => (
+                {TIMELINE_STEPS.filter(s => s !== 'cancelled').map((s, i) => (
                   <div className="sh-tl-item" key={s}>
                     <div className="sh-tl-dot-col">
                       <div className="sh-tl-dot"
                         style={{ background: i <= idx ? 'var(--teal)' : 'var(--border)', color: '#fff' }}>
                         {i <= idx ? <Check size={12} /> : null}
                       </div>
-                      {i < TIMELINE_STEPS.length - 1 && (
+                      {i < TIMELINE_STEPS.filter(s => s !== 'cancelled').length - 1 && (
                         <div className="sh-tl-line"
                           style={{ background: i < idx ? 'var(--teal)' : 'var(--border)' }} />
                       )}
                     </div>
                     <div className="sh-tl-content">
                       <b style={{ color: i <= idx ? 'var(--ink)' : 'var(--ink-soft)' }}>
-                        {STATUS_META[s].label}
+                        {STATUS_META[s]?.label}
                       </b>
                     </div>
                   </div>
@@ -460,10 +486,10 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
           <>
             <div style={{ textAlign: 'center', margin: '10px 0 22px' }}>
               <div className="sh-avatar" style={{ width: 60, height: 60, fontSize: 20, margin: '0 auto 10px' }}>
-                {CURRENT_USER.initials}
+                {userInitials}
               </div>
-              <h2 className="sh-h1" style={{ margin: 0 }}>{CURRENT_USER.name}</h2>
-              <p className="sh-sub">{CURRENT_USER.phone}</p>
+              <h2 className="sh-h1" style={{ margin: 0 }}>{displayName}</h2>
+              <p className="sh-sub">{userEmail}</p>
             </div>
             {['Saved addresses', 'Payment methods', 'Notifications', 'Help & support'].map(t => (
               <div className="sh-card" key={t}
@@ -472,8 +498,8 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
                 <ChevronRight size={16} color="var(--ink-soft)" />
               </div>
             ))}
-            <button className="sh-btn sh-btn-danger" style={{ marginTop: 10 }} onClick={onExit}>
-              <LogOut size={15} /> Exit demo
+            <button className="sh-btn sh-btn-danger" style={{ marginTop: 10 }} onClick={handleSignOut}>
+              <LogOut size={15} /> Sign out
             </button>
           </>
         )}
