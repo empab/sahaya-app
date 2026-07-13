@@ -35,32 +35,48 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Restore last portal from localStorage
-    const savedPortal = localStorage.getItem('sh_portal');
+    // Load auth session AND app data together before showing any UI
+    async function init() {
+      const savedPortal = localStorage.getItem('sh_portal');
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+      // Run session check and data fetch simultaneously
+      const [{ data: { session } }, pRes, bRes, sRes] = await Promise.all([
+        supabase.auth.getSession(),
+        supabase.from('providers').select('*'),
+        supabase.from('bookings').select('*').order('created_at', { ascending: false }),
+        supabase.from('services').select('*').order('id', { ascending: true }),
+      ]);
+
+      // Set all data at once
+      if (!pRes.error) setProviders(pRes.data);
+      if (!bRes.error) setBookings(bRes.data.map(transformBooking));
+      if (!sRes.error) setServices(sRes.data);
+
+      // Restore session and portal BEFORE removing isLoading
       setSession(session);
-      // If user has an active session and was in the user portal, restore it
       if (session && savedPortal === 'user') {
         setPortal('user');
       }
-    });
 
+      setIsLoading(false);
+    }
+
+    init();
+
+    // Listen for auth state changes after initial load
     const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
-      // When user signs out, go back to landing
       if (event === 'SIGNED_OUT') {
         setPortal('landing');
         localStorage.removeItem('sh_portal');
       }
     });
 
+    // Real-time DB updates
     const dbSub = supabase.channel('schema-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'providers' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'providers' }, fetchData)
       .subscribe();
-
-    fetchData();
 
     return () => {
       authSub.unsubscribe();
@@ -69,19 +85,14 @@ export default function App() {
   }, []);
 
   async function fetchData() {
-    setIsLoading(true);
     const [pRes, bRes, sRes] = await Promise.all([
       supabase.from('providers').select('*'),
       supabase.from('bookings').select('*').order('created_at', { ascending: false }),
-      supabase.from('services').select('*').order('id', { ascending: true })
+      supabase.from('services').select('*').order('id', { ascending: true }),
     ]);
-
     if (!pRes.error) setProviders(pRes.data);
-    if (!bRes.error) {
-      setBookings(bRes.data.map(transformBooking));
-    }
+    if (!bRes.error) setBookings(bRes.data.map(transformBooking));
     if (!sRes.error) setServices(sRes.data);
-    setIsLoading(false);
   }
 
   async function addBooking(b) {
