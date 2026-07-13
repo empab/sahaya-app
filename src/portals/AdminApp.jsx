@@ -96,7 +96,7 @@ export default function AdminApp({ providers, bookings, users, services, updateB
       <div style={{ maxWidth: 380, margin: '0 auto' }}>
         <LoginScreen
           roleLabel="Admin panel"
-          RoleIcon={Shield}
+          icon={Shield}
           hint="Oversee bookings, providers and platform performance."
           isEmail={true}
           onLogin={(id, pwd) => {
