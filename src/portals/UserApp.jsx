@@ -10,9 +10,8 @@ import PhoneFrame   from '../components/PhoneFrame.jsx';
 import LoginScreen  from '../components/LoginScreen.jsx';
 import StatusPill   from '../components/StatusPill.jsx';
 import Field        from '../components/Field.jsx';
-import { SERVICES, STATUS_META, serviceFor } from '../data/mock.js';
+import { supabase } from '../lib/supabase.js';
 
-const CURRENT_USER = { name: 'Priya S.', phone: '99470 11223', initials: 'PS' };
 const TIMELINE_STEPS = ['pending', 'assigned', 'confirmed', 'in_progress', 'completed'];
 
 /* ---------- Rating Modal ---------- */
@@ -71,8 +70,7 @@ function RatingModal({ booking, onSubmit, onClose }) {
 }
 
 /* ---------- Main UserApp ---------- */
-export default function UserApp({ bookings, addBooking, updateBooking, onExit }) {
-  const [authed,   setAuthed]   = useState(false);
+export default function UserApp({ bookings, addBooking, updateBooking, services, session, onExit }) {
   const [screen,   setScreen]   = useState('home');
   const [tab,      setTab]      = useState('home');
   const [service,  setService]  = useState(null);
@@ -85,9 +83,11 @@ export default function UserApp({ bookings, addBooking, updateBooking, onExit })
     { id: 2, text: 'Rajesh Kumar accepted your job.',       time: '1 hr ago',   read: false },
   ]);
 
-  const myBookings    = bookings.filter(b => b.customerName === CURRENT_USER.name).sort((a, b) => b.id - a.id);
+  const userEmail = session?.user?.email;
+  const userName  = userEmail ? userEmail.split('@')[0] : '';
+  const myBookings    = bookings.filter(b => b.customerName === userEmail).sort((a, b) => b.id - a.id);
   const unreadCount   = notifications.filter(n => !n.read).length;
-  const filteredSvcs  = SERVICES.filter(s => s.name.toLowerCase().includes(query.toLowerCase()));
+  const filteredSvcs  = services.filter(s => s.name.toLowerCase().includes(query.toLowerCase()));
   const ratingBooking = ratingBookingId ? bookings.find(b => b.id === ratingBookingId) : null;
 
   function goTab(key) { setTab(key); setScreen(key); }
@@ -102,9 +102,9 @@ export default function UserApp({ bookings, addBooking, updateBooking, onExit })
     addBooking({
       serviceId:    service.id,
       serviceName:  service.name,
-      customerName: CURRENT_USER.name,
-      phone:        CURRENT_USER.phone,
-      address:      bookingForm.address || '4B Palm Residency, Kondotty',
+      customerName: userEmail,
+      phone:        'N/A', // Collected later or via profile
+      address:      bookingForm.address || 'My Address',
       date:         bookingForm.date,
       time:         bookingForm.time,
       price:        service.price,
@@ -125,14 +125,31 @@ export default function UserApp({ bookings, addBooking, updateBooking, onExit })
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   }
 
-  if (!authed) {
+  const handleSendOtp = async (email) => {
+    return supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true }
+    });
+  };
+
+  const handleVerifyOtp = async (email, token) => {
+    return supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'magiclink' // Verify OTP code sent via magiclink
+    });
+  };
+
+  if (!session) {
     return (
       <PhoneFrame title={null}>
         <LoginScreen
-          roleLabel="Sahaya"
-          RoleIcon={HomeIcon}
+          roleLabel="Sahaya Customer"
+          icon={HomeIcon}
           hint="Book trusted help for anything at home."
-          onLogin={() => setAuthed(true)}
+          useOtp={true}
+          onSendOtp={handleSendOtp}
+          onVerifyOtp={handleVerifyOtp}
           onExit={onExit}
         />
       </PhoneFrame>

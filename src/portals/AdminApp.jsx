@@ -429,7 +429,9 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                 <tr><th>Service</th><th>Category skill</th><th>Starting price</th><th>Bookings</th><th></th></tr>
               </thead>
               <tbody>
-                {services.map(s => (
+                {services.map(s => {
+                  const liveCount = bookings.filter(b => b.serviceId === s.id).length;
+                  return (
                   <tr key={s.id}>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -441,7 +443,7 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                     </td>
                     <td>{s.skill}</td>
                     <td className="sh-price">₹{s.price}</td>
-                    <td>{s.bookings}</td>
+                    <td>{liveCount}</td>
                     <td>
                       <span className="sh-pill" style={{ background: 'var(--green)22', color: 'var(--green)' }}>Active</span>
                       <button 
@@ -453,7 +455,7 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                       </button>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </>

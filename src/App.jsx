@@ -30,11 +30,30 @@ export default function App() {
   const [providers, setProviders] = useState([]);
   const [bookings,  setBookings]  = useState([]);
   const [services,  setServices]  = useState([]);
-  const [users]                   = useState(INITIAL_USERS);
+  const [session,   setSession]   = useState(null);
+  const [users]                   = useState([]); // Remove mock users
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    const dbSub = supabase.channel('schema-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'providers' }, () => fetchData())
+      .subscribe();
+
     fetchData();
+
+    return () => {
+      authSub.unsubscribe();
+      supabase.removeChannel(dbSub);
+    };
   }, []);
 
   async function fetchData() {
@@ -130,7 +149,7 @@ export default function App() {
     }
   }
 
-  const sharedProps = { bookings, updateBooking, providers, updateProvider, addProvider, users, services, addService, updateService };
+  const sharedProps = { bookings, updateBooking, providers, updateProvider, addProvider, users, services, addService, updateService, session };
 
   if (isLoading) return <div style={{padding: 40}}>Loading App Data...</div>;
 
