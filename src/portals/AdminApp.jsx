@@ -417,7 +417,15 @@ export default function AdminApp({ providers, bookings, users, updateBooking, up
             <p className="sh-section-sub">People booking services through Sahaya</p>
             <table className="sh-table">
               <thead>
-                <tr><th>Customer</th><th>Phone</th><th>Joined</th><th>Bookings made</th></tr>
+                <tr>
+                  <th>Customer</th>
+                  <th>Phone</th>
+                  <th>Mail id</th>
+                  <th>Password</th>
+                  <th>Joined</th>
+                  <th>Last Log in date</th>
+                  <th>Bookings made</th>
+                </tr>
               </thead>
               <tbody>
                 {users.map(u => (
@@ -431,7 +439,10 @@ export default function AdminApp({ providers, bookings, users, updateBooking, up
                       </div>
                     </td>
                     <td>{u.phone}</td>
+                    <td>{u.email || '-'}</td>
+                    <td>{u.password || '******'}</td>
                     <td>{u.joined}</td>
+                    <td>{u.lastLogin || '-'}</td>
                     <td>{u.bookingsCount}</td>
                   </tr>
                 ))}
