@@ -560,34 +560,7 @@ export default function AdminApp({ providers, bookings, users, services, updateB
           </div>
         </div>
       )}
-    </div>
-  );
-}
 
-/* ---------- Sub-components ---------- */
-
-function Sidebar({ section, setSection, onExit }) {
-  return (
-    <div className="sh-sidebar">
-      <div className="sh-brand-row">
-        <div className="sh-patch" style={{ background: 'var(--amber)', border: 'none', width: 32, height: 32 }}>
-          <Shield size={16} color="var(--teal-dark)" />
-        </div>
-        <b>Sahaya Admin</b>
-      </div>
-      {SIDEBAR_ITEMS.map(it => (
-        <div
-          key={it.key}
-          className={'sh-side-item' + (section === it.key ? ' active' : '')}
-          onClick={() => setSection(it.key)}
-        >
-          <it.icon size={16} /> {it.label}
-        </div>
-      ))}
-      <div className="sh-side-footer">
-        <div className="sh-side-item" onClick={onExit}><LogOut size={16} /> Exit demo</div>
-      </div>
-    </div>
       {showCreateService && (
         <div className="sh-modal-backdrop">
           <div className="sh-modal">
@@ -621,6 +594,33 @@ function Sidebar({ section, setSection, onExit }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ---------- Sub-components ---------- */
+
+function Sidebar({ section, setSection, onExit }) {
+  return (
+    <div className="sh-sidebar">
+      <div className="sh-brand-row">
+        <div className="sh-patch" style={{ background: 'var(--amber)', border: 'none', width: 32, height: 32 }}>
+          <Shield size={16} color="var(--teal-dark)" />
+        </div>
+        <b>Sahaya Admin</b>
+      </div>
+      {SIDEBAR_ITEMS.map(it => (
+        <div
+          key={it.key}
+          className={'sh-side-item' + (section === it.key ? ' active' : '')}
+          onClick={() => setSection(it.key)}
+        >
+          <it.icon size={16} /> {it.label}
+        </div>
+      ))}
+      <div className="sh-side-footer">
+        <div className="sh-side-item" onClick={onExit}><LogOut size={16} /> Exit demo</div>
+      </div>
     </div>
   );
 }

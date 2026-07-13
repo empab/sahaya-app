@@ -54,8 +54,8 @@ export default function App() {
 
       // Restore session and portal BEFORE removing isLoading
       setSession(session);
-      if (session && savedPortal === 'user') {
-        setPortal('user');
+      if (savedPortal && savedPortal !== 'landing') {
+        setPortal(savedPortal);
       }
 
       setIsLoading(false);
