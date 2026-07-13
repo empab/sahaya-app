@@ -149,7 +149,27 @@ export default function App() {
     }
   }
 
-  const sharedProps = { bookings, updateBooking, providers, updateProvider, addProvider, users, services, addService, updateService, session };
+  // Derive unique customers from the bookings table
+  const usersMap = {};
+  bookings.forEach(b => {
+    if (b.customerName && b.customerName !== 'N/A') {
+      if (!usersMap[b.customerName]) {
+        usersMap[b.customerName] = {
+          id: b.customerName,
+          name: b.customerName.split('@')[0], // Use part of email as name
+          email: b.customerName,
+          phone: b.phone !== 'N/A' ? b.phone : '-',
+          joined: new Date(b.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+          bookingsCount: 0,
+          lastLogin: 'Active'
+        };
+      }
+      usersMap[b.customerName].bookingsCount += 1;
+    }
+  });
+  const derivedUsers = Object.values(usersMap);
+
+  const sharedProps = { bookings, updateBooking, providers, updateProvider, addProvider, users: derivedUsers, services, addService, updateService, session };
 
   if (isLoading) return <div style={{padding: 40}}>Loading App Data...</div>;
 
