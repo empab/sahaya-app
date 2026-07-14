@@ -38,24 +38,114 @@ const WEEKLY_EARNINGS = [
   { l: 'T', v: 650 },  { l: 'F', v: 1800 }, { l: 'S', v: 3200 }, { l: 'S', v: 450 },
 ];
 
-export default function ProviderApp({ providers, bookings, updateBooking, updateProvider, onExit }) {
-  const [authed,    setAuthed]    = useState(false);
+export default function ProviderApp({ providers, bookings, updateBooking, updateProvider, addProvider, services, onExit }) {
+  const [authedUserId, setAuthedUserId] = useState(() => localStorage.getItem('sh_provider_id') || null);
+  const [authMode, setAuthMode] = useState('login');
+  
+  // Login states
+  const [loginUser, setLoginUser] = useState('');
+  const [loginPwd, setLoginPwd] = useState('');
+  const [loginErr, setLoginErr] = useState('');
+
+  // Signup states
+  const [newProvider, setNewProvider] = useState({ name: '', phone: '', email: '', address: '', aadhaar_number: '', skill: 'House Help', price: '', username: '', password: '' });
+
   const [tab,       setTab]       = useState('dashboard');
   const [available, setAvailable] = useState(true);
   const [jobFilter, setJobFilter] = useState('active');
 
-  const me = providers.find(p => p.id === 1); // Rajesh Kumar – Electrical
+  const me = authedUserId ? providers.find(p => p.id === parseInt(authedUserId)) : null;
 
-  if (!authed) {
+  function handleLogin(e) {
+    e.preventDefault();
+    setLoginErr('');
+    const match = providers.find(p => p.username === loginUser && p.password === loginPwd);
+    if (match) {
+      localStorage.setItem('sh_provider_id', match.id);
+      setAuthedUserId(match.id);
+    } else {
+      setLoginErr('Invalid username or password');
+    }
+  }
+
+  function handleSignup(e) {
+    e.preventDefault();
+    setLoginErr('');
+    if (providers.some(p => p.username === newProvider.username)) {
+      setLoginErr('Username is already taken');
+      return;
+    }
+    addProvider(newProvider);
+    // Since addProvider is async and updates state later, we can't instantly log them in. 
+    // We'll switch to login mode and ask them to log in.
+    setAuthMode('login');
+    setLoginUser(newProvider.username);
+    setLoginPwd(newProvider.password);
+  }
+
+  function handleLogOut() {
+    localStorage.removeItem('sh_provider_id');
+    setAuthedUserId(null);
+  }
+
+  if (!me) {
     return (
       <PhoneFrame>
-        <LoginScreen
-          roleLabel="Provider app"
-          RoleIcon={Briefcase}
-          hint="Accept jobs, track earnings and manage your schedule."
-          onLogin={() => setAuthed(true)}
-          onExit={onExit}
-        />
+        <div style={{ padding: '20px 4px' }}>
+          <div className="sh-patch lg teal" style={{ marginBottom: 16 }}>
+            <Briefcase size={26} color="var(--teal)" />
+          </div>
+          <h2 className="sh-h1">{authMode === 'login' ? 'Log in to Partner app' : 'Become a Partner'}</h2>
+          <p className="sh-sub">
+            {authMode === 'login' ? 'Accept jobs, track earnings and manage your schedule.' : 'Register to start accepting jobs on Sahaya.'}
+          </p>
+          
+          {loginErr && <div style={{ color: 'red', fontSize: 13, marginBottom: 10, fontWeight: 600 }}>{loginErr}</div>}
+
+          {authMode === 'login' ? (
+            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <input required type="text" className="sh-input" placeholder="Username" value={loginUser} onChange={e => setLoginUser(e.target.value)} />
+              <input required type="password" className="sh-input" placeholder="Password" value={loginPwd} onChange={e => setLoginPwd(e.target.value)} />
+              <button type="submit" className="sh-btn sh-btn-primary" style={{ marginTop: 6 }}>Log in</button>
+              <div style={{ marginTop: 14, textAlign: 'center' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-light)' }}>Don't have an account? </span>
+                <button type="button" style={{ background: 'none', border: 'none', color: 'var(--teal)', fontWeight: 600, cursor: 'pointer', padding: 0 }} onClick={() => setAuthMode('signup')}>Sign up</button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input required type="text" className="sh-input" placeholder="Full Name" value={newProvider.name} onChange={e => setNewProvider({...newProvider, name: e.target.value})} style={{ flex: 1 }} />
+                <input required type="text" className="sh-input" placeholder="Username" value={newProvider.username} onChange={e => setNewProvider({...newProvider, username: e.target.value})} style={{ flex: 1 }} />
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input required type="tel" className="sh-input" placeholder="Phone Number" value={newProvider.phone} onChange={e => setNewProvider({...newProvider, phone: e.target.value})} style={{ flex: 1 }} />
+                <input required type="password" className="sh-input" placeholder="Password" value={newProvider.password} onChange={e => setNewProvider({...newProvider, password: e.target.value})} style={{ flex: 1 }} />
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input required type="email" className="sh-input" placeholder="Email Address" value={newProvider.email} onChange={e => setNewProvider({...newProvider, email: e.target.value})} style={{ flex: 1 }} />
+                <input required type="number" className="sh-input" placeholder="Base Price (₹)" value={newProvider.price} onChange={e => setNewProvider({...newProvider, price: e.target.value})} style={{ flex: 1 }} />
+              </div>
+              <select className="sh-input" value={newProvider.skill} onChange={e => setNewProvider({...newProvider, skill: e.target.value})}>
+                {services && services.length > 0 ? [...new Set(services.map(s => s.skill))].map(skill => (
+                  <option key={skill} value={skill}>{skill}</option>
+                )) : <option value="House Help">House Help</option>}
+              </select>
+              <textarea required className="sh-input" placeholder="Physical Address" style={{ minHeight: 50, resize: 'vertical' }} value={newProvider.address} onChange={e => setNewProvider({...newProvider, address: e.target.value})} />
+              <button type="submit" className="sh-btn sh-btn-primary" style={{ marginTop: 6 }}>Sign up</button>
+              <div style={{ marginTop: 14, textAlign: 'center' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-light)' }}>Already have an account? </span>
+                <button type="button" style={{ background: 'none', border: 'none', color: 'var(--teal)', fontWeight: 600, cursor: 'pointer', padding: 0 }} onClick={() => setAuthMode('login')}>Log in</button>
+              </div>
+            </form>
+          )}
+
+          <div style={{ marginTop: 20 }}>
+            <button type="button" className="sh-btn sh-btn-ghost" onClick={onExit}>
+              <X size={15} /> Exit
+            </button>
+          </div>
+        </div>
       </PhoneFrame>
     );
   }
@@ -263,11 +353,11 @@ export default function ProviderApp({ providers, bookings, updateBooking, update
       {tab === 'profile' && (
         <>
           <div style={{ textAlign: 'center', margin: '10px 0 22px' }}>
-            <div className="sh-avatar" style={{ width: 60, height: 60, fontSize: 20, margin: '0 auto 10px' }}>RK</div>
+            <div className="sh-avatar" style={{ width: 60, height: 60, fontSize: 20, margin: '0 auto 10px' }}>{me.name.slice(0, 2).toUpperCase()}</div>
             <h2 className="sh-h1" style={{ margin: 0 }}>{me.name}</h2>
             <p className="sh-sub">{me.skill} specialist</p>
             <span className="sh-pill" style={{ background: 'var(--teal-tint)', color: 'var(--teal)' }}>
-              <ShieldCheck size={12} /> Verified provider
+              <ShieldCheck size={12} /> Verified partner
             </span>
           </div>
           {['Bank & payouts', 'Documents & verification', 'Working hours', 'Help & support'].map(t => (
@@ -277,9 +367,14 @@ export default function ProviderApp({ providers, bookings, updateBooking, update
               <ChevronRight size={16} color="var(--ink-soft)" />
             </div>
           ))}
-          <button className="sh-btn sh-btn-danger" style={{ marginTop: 10 }} onClick={onExit}>
-            <LogOut size={15} /> Exit demo
-          </button>
+          <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+            <button className="sh-btn sh-btn-ghost" style={{ flex: 1 }} onClick={handleLogOut}>
+              <LogOut size={15} /> Log out
+            </button>
+            <button className="sh-btn sh-btn-danger" style={{ flex: 1 }} onClick={onExit}>
+              <X size={15} /> Exit app
+            </button>
+          </div>
         </>
       )}
     </PhoneFrame>

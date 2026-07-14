@@ -12,7 +12,7 @@ import { SERVICES, STATUS_META, serviceFor, providerFor } from '../data/mock.js'
 const SIDEBAR_ITEMS = [
   { key: 'dashboard', label: 'Dashboard',       icon: BarChart3 },
   { key: 'bookings',  label: 'Bookings',         icon: ClipboardList },
-  { key: 'providers', label: 'Providers',        icon: Briefcase },
+  { key: 'providers', label: 'Service Providers', icon: Briefcase },
   { key: 'services',  label: 'Services',         icon: LayoutGrid },
   { key: 'users',     label: 'Users',            icon: Users },
 ];
@@ -26,16 +26,20 @@ export default function AdminApp({ providers, bookings, users, services, updateB
   const [bookingSearch,  setBookingSearch]  = useState('');
   const [providerDetail, setProviderDetail] = useState(null);
   const [showCreateProvider, setShowCreateProvider] = useState(false);
-  const [newProvider, setNewProvider] = useState({ name: '', phone: '', email: '', address: '', aadhaar_number: '', skill: 'House Help' });
+  const [newProvider, setNewProvider] = useState({ name: '', phone: '', email: '', address: '', aadhaar_number: '', skill: 'House Help', price: '', username: '', password: '' });
   const [showCreateService, setShowCreateService] = useState(false);
   const [newService, setNewService] = useState({ name: '', price: '', skill: '' });
   const [editingService, setEditingService] = useState(null);
 
   function handleCreateProvider(e) {
     e.preventDefault();
+    if (providers.some(p => p.username === newProvider.username)) {
+      alert('Username is already taken');
+      return;
+    }
     addProvider(newProvider);
     setShowCreateProvider(false);
-    setNewProvider({ name: '', phone: '', email: '', address: '', aadhaar_number: '', skill: 'House Help' });
+    setNewProvider({ name: '', phone: '', email: '', address: '', aadhaar_number: '', skill: 'House Help', price: '', username: '', password: '' });
   }
 
   function handleCreateService(e) {
@@ -518,9 +522,31 @@ export default function AdminApp({ providers, bookings, users, services, updateB
             </div>
             
             <form onSubmit={handleCreateProvider} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Full Name</label>
-                <input required type="text" className="sh-input" value={newProvider.name} onChange={e => setNewProvider({...newProvider, name: e.target.value})} />
+              <div style={{ display: 'flex', gap: 16 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+                  <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Full Name</label>
+                  <input required type="text" className="sh-input" value={newProvider.name} onChange={e => setNewProvider({...newProvider, name: e.target.value})} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+                  <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Username</label>
+                  <input required type="text" className="sh-input" value={newProvider.username} onChange={e => setNewProvider({...newProvider, username: e.target.value})} />
+                  {newProvider.username && (
+                    <span style={{ fontSize: 11, color: providers.some(p => p.username === newProvider.username) ? 'red' : 'green' }}>
+                      {providers.some(p => p.username === newProvider.username) ? 'Username unavailable' : 'Username available'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 16 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+                  <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Password</label>
+                  <input required type="text" className="sh-input" value={newProvider.password} onChange={e => setNewProvider({...newProvider, password: e.target.value})} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+                  <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Email Address</label>
+                  <input required type="email" className="sh-input" value={newProvider.email} onChange={e => setNewProvider({...newProvider, email: e.target.value})} />
+                </div>
               </div>
               
               <div style={{ display: 'flex', gap: 16 }}>
@@ -529,6 +555,13 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                   <input required type="tel" className="sh-input" value={newProvider.phone} onChange={e => setNewProvider({...newProvider, phone: e.target.value})} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+                  <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Aadhaar Number</label>
+                  <input required type="text" className="sh-input" placeholder="XXXX XXXX XXXX" value={newProvider.aadhaar_number} onChange={e => setNewProvider({...newProvider, aadhaar_number: e.target.value})} />
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: 16 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
                   <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Primary Skill</label>
                   <select className="sh-input" value={newProvider.skill} onChange={e => setNewProvider({...newProvider, skill: e.target.value})}>
                     {[...new Set(SERVICES.map(s => s.skill))].map(skill => (
@@ -536,16 +569,10 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                     ))}
                   </select>
                 </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Email Address</label>
-                <input required type="email" className="sh-input" value={newProvider.email} onChange={e => setNewProvider({...newProvider, email: e.target.value})} />
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Aadhaar Number</label>
-                <input required type="text" className="sh-input" placeholder="XXXX XXXX XXXX" value={newProvider.aadhaar_number} onChange={e => setNewProvider({...newProvider, aadhaar_number: e.target.value})} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+                  <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Base Price (₹)</label>
+                  <input required type="number" className="sh-input" placeholder="e.g. 500" value={newProvider.price} onChange={e => setNewProvider({...newProvider, price: e.target.value})} />
+                </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
