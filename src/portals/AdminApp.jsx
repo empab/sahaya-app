@@ -140,6 +140,20 @@ export default function AdminApp({ providers, bookings, users, services, updateB
             </div>
           </div>
 
+          {/* Provider Details (Sign-up) */}
+          <div className="sh-card" style={{ marginBottom: 20 }}>
+            <h3 style={{ marginTop: 0, fontSize: 16 }}>Sign-up Details</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: 14 }}>
+              <div><strong>Username:</strong> {p.username || '—'}</div>
+              <div><strong>Password:</strong> {p.password || '—'}</div>
+              <div><strong>Email:</strong> {p.email || '—'}</div>
+              <div><strong>Phone:</strong> {p.phone || '—'}</div>
+              <div><strong>Aadhaar Number:</strong> {p.aadhaar_number || '—'}</div>
+              <div><strong>Base Price:</strong> ₹{p.price || p.charge || 0}</div>
+              <div style={{ gridColumn: 'span 2' }}><strong>Address:</strong> {p.address || '—'}</div>
+            </div>
+          </div>
+
           {/* Provider KPIs */}
           <div className="sh-kpi-grid" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
             <div className="sh-kpi-card">
@@ -342,6 +356,11 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                       <div>
                         <p className="sh-card-title">{p.name}</p>
                         <div className="sh-card-meta">{p.skill} · {p.phone}</div>
+                        <div className="sh-card-meta" style={{ marginTop: 4, color: 'var(--ink-soft)' }}>
+                          Username: <b>{p.username || '-'}</b> &nbsp;&bull;&nbsp; 
+                          Password: <b>{p.password || '-'}</b> &nbsp;&bull;&nbsp; 
+                          Price: <b>₹{p.price || p.charge || 0}</b>
+                        </div>
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
@@ -364,6 +383,8 @@ export default function AdminApp({ providers, bookings, users, services, updateB
               <thead>
                 <tr>
                   <th>Provider</th>
+                  <th>Username</th>
+                  <th>Password</th>
                   <th>Active Status</th>
                   <th>Price Added</th>
                   <th>Total Attended Works</th>
@@ -389,6 +410,8 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                         {p.name}
                       </div>
                     </td>
+                    <td>{p.username || '-'}</td>
+                    <td>{p.password || '-'}</td>
                     <td>
                       {p.is_available ? (
                         <span className="sh-pill" style={{ background: 'var(--green)22', color: 'var(--green)' }}>Active</span>
@@ -396,7 +419,7 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                         <span className="sh-pill" style={{ background: '#f1f3f5', color: '#868e96' }}>Inactive</span>
                       )}
                     </td>
-                    <td className="sh-price">₹{p.charge || 0}</td>
+                    <td className="sh-price">₹{p.price || p.charge || 0}</td>
                     <td>{p.jobs || 0}</td>
                     <td>{skills[0] || '-'}</td>
                     <td>{skills[1] || '-'}</td>
