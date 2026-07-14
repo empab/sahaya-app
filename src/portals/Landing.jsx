@@ -13,17 +13,7 @@ export default function Landing({ onSelect }) {
         verified providers who do the work, and the team keeping it all running.
       </p>
 
-      <div className="sh-portal-grid">
-        <div className="sh-portal-card" onClick={() => onSelect('user')} id="portal-customer">
-          <div className="sh-picon"><HomeIcon size={20} /></div>
-          <b>Customer App</b>
-          <span>Book a service</span>
-        </div>
-        <div className="sh-portal-card" onClick={() => onSelect('provider')} id="portal-provider">
-          <div className="sh-picon"><Briefcase size={20} /></div>
-          <b>Partner App</b>
-          <span>Accept &amp; complete jobs</span>
-        </div>
+      <div className="sh-portal-grid" style={{ display: 'flex', justifyContent: 'center' }}>
         <div className="sh-portal-card" onClick={() => onSelect('admin')} id="portal-admin">
           <div className="sh-picon"><Shield size={20} /></div>
           <b>Admin Panel</b>
