@@ -24,6 +24,7 @@ function transformBooking(b) {
     createdAt: b.created_at,
     lat: b.lat,
     lng: b.lng,
+    skill: b.skill,
   };
 }
 
@@ -95,6 +96,7 @@ export default function App() {
     const dbSub = supabase.channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, fetchData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'providers' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, fetchData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, fetchData)
       .subscribe();
 
@@ -146,6 +148,7 @@ export default function App() {
       status: 'pending',
       lat: b.lat,
       lng: b.lng,
+      skill: b.skill,
     }).select();
 
     if (!error && data) {
@@ -220,7 +223,7 @@ export default function App() {
   async function addService(s) {
     const { data, error } = await supabase.from('services').insert({
       name: s.name,
-      icon_name: s.icon_name || 'home_repair_service',
+      icon: s.icon || s.icon_name || 'home_repair_service',
       bookings: s.bookings || '0+',
       price: s.price,
       skill: s.skill,

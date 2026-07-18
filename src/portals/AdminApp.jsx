@@ -94,7 +94,7 @@ export default function AdminApp({ providers, bookings, users, services, updateB
       price: parseInt(newService.price) || 0,
       skill: newService.skill,
       desc: '',
-      icon_name: 'home_repair_service'
+      icon: 'home_repair_service'
     });
     setShowCreateService(false);
     setNewService({ name: '', price: '', skill: '' });

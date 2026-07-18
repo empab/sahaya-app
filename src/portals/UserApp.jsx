@@ -155,6 +155,7 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
       createdAt:    new Date().toISOString(),
       lat:          coords.lat,
       lng:          coords.lng,
+      skill:        service.skill,
     });
     setScreen('confirmed');
   }
