@@ -22,6 +22,8 @@ function transformBooking(b) {
     status: b.status,
     providerId: b.provider_id,
     createdAt: b.created_at,
+    lat: b.lat,
+    lng: b.lng,
   };
 }
 
@@ -31,7 +33,7 @@ export default function App() {
   const [bookings,  setBookings]  = useState([]);
   const [services,  setServices]  = useState([]);
   const [session,   setSession]   = useState(null);
-  const [users]                   = useState([]); // Remove mock users
+  const [users,     setUsers]     = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -40,17 +42,34 @@ export default function App() {
       const savedPortal = localStorage.getItem('sh_portal');
 
       // Run session check and data fetch simultaneously
-      const [{ data: { session } }, pRes, bRes, sRes] = await Promise.all([
+      const [{ data: { session } }, pRes, bRes, sRes, cRes] = await Promise.all([
         supabase.auth.getSession(),
         supabase.from('providers').select('*'),
         supabase.from('bookings').select('*').order('created_at', { ascending: false }),
         supabase.from('services').select('*').order('id', { ascending: true }),
+        supabase.from('customers').select('*').order('created_at', { ascending: false }),
       ]);
 
       // Set all data at once
       if (!pRes.error) setProviders(pRes.data);
       if (!bRes.error) setBookings(bRes.data.map(transformBooking));
       if (!sRes.error) setServices(sRes.data);
+      if (!cRes.error) {
+        const derivedUsers = cRes.data.map(c => {
+          const userBookings = bRes.data ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone) : [];
+          return {
+            id: c.id,
+            name: c.name || '-',
+            email: c.email || '-',
+            phone: c.phone || '-',
+            password: '*****',
+            joined: c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+            lastLogin: 'Active',
+            bookingsCount: userBookings.length,
+          };
+        });
+        setUsers(derivedUsers);
+      }
 
       // Restore session and portal BEFORE removing isLoading
       setSession(session);
@@ -76,6 +95,7 @@ export default function App() {
     const dbSub = supabase.channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, fetchData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'providers' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, fetchData)
       .subscribe();
 
     return () => {
@@ -85,14 +105,31 @@ export default function App() {
   }, []);
 
   async function fetchData() {
-    const [pRes, bRes, sRes] = await Promise.all([
+    const [pRes, bRes, sRes, cRes] = await Promise.all([
       supabase.from('providers').select('*'),
       supabase.from('bookings').select('*').order('created_at', { ascending: false }),
       supabase.from('services').select('*').order('id', { ascending: true }),
+      supabase.from('customers').select('*').order('created_at', { ascending: false }),
     ]);
     if (!pRes.error) setProviders(pRes.data);
     if (!bRes.error) setBookings(bRes.data.map(transformBooking));
     if (!sRes.error) setServices(sRes.data);
+    if (!cRes.error) {
+      const derivedUsers = cRes.data.map(c => {
+        const userBookings = bRes.data ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone) : [];
+        return {
+          id: c.id,
+          name: c.name || '-',
+          email: c.email || '-',
+          phone: c.phone || '-',
+          password: '*****',
+          joined: c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+          lastLogin: 'Active',
+          bookingsCount: userBookings.length,
+        };
+      });
+      setUsers(derivedUsers);
+    }
   }
 
   async function addBooking(b) {
@@ -107,6 +144,8 @@ export default function App() {
       price: b.price,
       notes: b.notes || '',
       status: 'pending',
+      lat: b.lat,
+      lng: b.lng,
     }).select();
 
     if (!error && data) {
@@ -133,6 +172,29 @@ export default function App() {
   }
 
   async function addProvider(p) {
+    let lat = null;
+    let lng = null;
+    const addr = (p.address || '').toLowerCase();
+    if (addr.includes('pattambi')) {
+      lat = 10.8123; lng = 76.1983;
+    } else if (addr.includes('kondotty')) {
+      lat = 11.1495; lng = 75.9723;
+    } else if (addr.includes('kozhikode') || addr.includes('calicut')) {
+      lat = 11.2588; lng = 75.7804;
+    } else if (addr.includes('malappuram')) {
+      lat = 11.0736; lng = 76.0740;
+    } else {
+      let hash = 0;
+      const str = p.name || p.phone || '';
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const latDelta = (hash % 100) / 1000;
+      const lngDelta = ((hash >> 8) % 100) / 1000;
+      lat = 11.1495 + latDelta;
+      lng = 75.9723 + lngDelta;
+    }
+
     const { data, error } = await supabase.from('providers').insert({
       name: p.name,
       skill: p.skill,
@@ -146,6 +208,8 @@ export default function App() {
       rating: 0,
       jobs: 0,
       status: 'pending',
+      lat: lat,
+      lng: lng,
     }).select();
 
     if (!error && data && data.length > 0) {
@@ -175,27 +239,7 @@ export default function App() {
     }
   }
 
-  // Derive unique customers from the bookings table
-  const usersMap = {};
-  bookings.forEach(b => {
-    if (b.customerName && b.customerName !== 'N/A') {
-      if (!usersMap[b.customerName]) {
-        usersMap[b.customerName] = {
-          id: b.customerName,
-          name: b.customerName.split('@')[0], // Use part of email as name
-          email: b.customerName,
-          phone: b.phone !== 'N/A' ? b.phone : '-',
-          joined: new Date(b.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-          bookingsCount: 0,
-          lastLogin: 'Active'
-        };
-      }
-      usersMap[b.customerName].bookingsCount += 1;
-    }
-  });
-  const derivedUsers = Object.values(usersMap);
-
-  const sharedProps = { bookings, updateBooking, providers, updateProvider, addProvider, users: derivedUsers, services, addService, updateService, session };
+  const sharedProps = { bookings, updateBooking, providers, updateProvider, addProvider, users, services, addService, updateService, session };
 
   if (isLoading) return <div style={{padding: 40}}>Loading App Data...</div>;
 

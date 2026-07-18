@@ -88,6 +88,20 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
   const [selectedBookingId, setSelectedBookingId] = useState(null);
   const [ratingBookingId,   setRatingBookingId]   = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [coords, setCoords] = useState({ lat: 11.1495, lng: 75.9723 });
+
+  React.useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        (err) => {
+          console.warn("Could not get web geolocation:", err);
+        }
+      );
+    }
+  }, []);
 
   // Get user info from real Supabase session
   const userEmail   = session?.user?.email || '';
@@ -102,6 +116,20 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
 
   // Get today's date nicely formatted
   const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+
+  // Fetch coordinates on screen change to booking as well to be sure
+  React.useEffect(() => {
+    if (screen === 'booking' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        (err) => {
+          console.warn("Could not refresh web geolocation:", err);
+        }
+      );
+    }
+  }, [screen]);
 
   function goTab(key) { setTab(key); setScreen(key); }
 
@@ -125,6 +153,8 @@ export default function UserApp({ bookings, addBooking, updateBooking, services,
       status:       'pending',
       providerId:   null,
       createdAt:    new Date().toISOString(),
+      lat:          coords.lat,
+      lng:          coords.lng,
     });
     setScreen('confirmed');
   }

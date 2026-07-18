@@ -9,6 +9,51 @@ import LoginScreen from '../components/LoginScreen.jsx';
 import StatusPill  from '../components/StatusPill.jsx';
 import { SERVICES, STATUS_META, serviceFor, providerFor } from '../data/mock.js';
 
+function getProviderCoordinates(provider) {
+  if (!provider) return null;
+  if (provider.lat !== undefined && provider.lat !== null && provider.lng !== undefined && provider.lng !== null) {
+    return { lat: provider.lat, lng: provider.lng };
+  }
+  const addr = (provider.address || '').toLowerCase();
+  if (addr.includes('pattambi')) {
+    return { lat: 10.8123, lng: 76.1983 };
+  }
+  if (addr.includes('kondotty')) {
+    return { lat: 11.1495, lng: 75.9723 };
+  }
+  if (addr.includes('kozhikode') || addr.includes('calicut')) {
+    return { lat: 11.2588, lng: 75.7804 };
+  }
+  if (addr.includes('malappuram')) {
+    return { lat: 11.0736, lng: 76.0740 };
+  }
+  // Deterministic mock based on name or phone
+  let hash = 0;
+  const str = provider.name || provider.phone || '';
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const latDelta = (hash % 100) / 1000;
+  const lngDelta = ((hash >> 8) % 100) / 1000;
+  return { lat: 11.1495 + latDelta, lng: 75.9723 + lngDelta };
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) return '—';
+  if (lat1 === null || lon1 === null || lat2 === null || lon2 === null) return '—';
+  
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2); 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  const d = R * c; // Distance in km
+  return d.toFixed(2) + ' km';
+}
+
 const SIDEBAR_ITEMS = [
   { key: 'dashboard', label: 'Dashboard',       icon: BarChart3 },
   { key: 'bookings',  label: 'Bookings',         icon: ClipboardList },
@@ -155,7 +200,7 @@ export default function AdminApp({ providers, bookings, users, services, updateB
           </div>
 
           {/* Provider KPIs */}
-          <div className="sh-kpi-grid" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
+          <div className="sh-kpi-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
             <div className="sh-kpi-card">
               <div className="sh-kpi-label"><Star size={13} /> Rating</div>
               <div className="sh-kpi-value">{p.rating || '—'}</div>
@@ -167,6 +212,150 @@ export default function AdminApp({ providers, bookings, users, services, updateB
             <div className="sh-kpi-card">
               <div className="sh-kpi-label"><Wallet size={13} /> Earnings</div>
               <div className="sh-kpi-value">₹{(p.earnings || 0).toLocaleString('en-IN')}</div>
+            </div>
+            <div className="sh-kpi-card" style={{ background: 'rgba(0,102,136,0.06)', border: '1px solid rgba(0,102,136,0.15)' }}>
+              <div className="sh-kpi-label" style={{ color: 'var(--secondary)' }}><Wallet size={13} /> Wallet Balance</div>
+              <div className="sh-kpi-value" style={{ color: 'var(--secondary)' }}>₹{(p.charge || 0).toLocaleString('en-IN')}</div>
+            </div>
+          </div>
+
+          {/* Wallet Management Section */}
+          <div className="sh-card" style={{ marginTop: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 16 }}>Wallet & Balance Management (Uber-style)</h3>
+              <span className="sh-pill" style={{ background: 'var(--teal-tint)', color: 'var(--teal)', fontWeight: 600 }}>
+                Active Wallet
+              </span>
+            </div>
+            <p className="sh-card-meta" style={{ marginBottom: 16 }}>
+              Directly adjust the service partner's wallet balance. Adjustments will reflect instantly on the partner's app.
+            </p>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 150 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-soft)' }}>Adjustment Type</label>
+                <select 
+                  id="wallet-adjust-type"
+                  className="sh-input" 
+                  style={{ height: 38, padding: '0 10px' }}
+                >
+                  <option value="add">Add Money (Credit / Bonus / Adjustment)</option>
+                  <option value="deduct">Deduct Money (Debit / Commission / Adjustment)</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: 120 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-soft)' }}>Amount (₹)</label>
+                <input 
+                  id="wallet-adjust-amount"
+                  type="number" 
+                  placeholder="e.g. 500" 
+                  className="sh-input" 
+                  style={{ height: 38, padding: '0 10px' }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 2, minWidth: 200 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-soft)' }}>Description / Reason</label>
+                <input 
+                  id="wallet-adjust-reason"
+                  type="text" 
+                  placeholder="e.g. Incentive bonus, Weekly cash commission deduction" 
+                  className="sh-input" 
+                  style={{ height: 38, padding: '0 10px' }}
+                />
+              </div>
+              <button 
+                className="sh-btn sh-btn-primary" 
+                style={{ height: 38, padding: '0 18px', display: 'flex', alignItems: 'center', gap: 6 }}
+                onClick={() => {
+                  const type = document.getElementById('wallet-adjust-type').value;
+                  const amtVal = document.getElementById('wallet-adjust-amount').value;
+                  const reason = document.getElementById('wallet-adjust-reason').value;
+                  const amount = parseFloat(amtVal);
+                  if (isNaN(amount) || amount <= 0) {
+                    alert('Please enter a valid amount');
+                    return;
+                  }
+                  if (!reason.trim()) {
+                    alert('Please enter a description/reason for the adjustment');
+                    return;
+                  }
+                  
+                  const currentBalance = parseFloat(p.charge || 0);
+                  const newBalance = type === 'add' ? currentBalance + amount : currentBalance - amount;
+                  
+                  // Save transaction to local state history
+                  const txId = Date.now();
+                  const newTx = {
+                    id: txId,
+                    providerId: p.id,
+                    type: type,
+                    amount: amount,
+                    reason: reason.trim(),
+                    date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                    balanceAfter: newBalance
+                  };
+                  
+                  // Read existing
+                  const saved = JSON.parse(localStorage.getItem(`sh_wallet_adjust_${p.id}`) || '[]');
+                  saved.unshift(newTx);
+                  localStorage.setItem(`sh_wallet_adjust_${p.id}`, JSON.stringify(saved));
+                  
+                  // Update database charge
+                  updateProvider(p.id, { charge: newBalance });
+                  
+                  // Clear form
+                  document.getElementById('wallet-adjust-amount').value = '';
+                  document.getElementById('wallet-adjust-reason').value = '';
+                  alert(`Wallet balance successfully updated! New balance: ₹${newBalance}`);
+                }}
+              >
+                Apply Adjustment
+              </button>
+            </div>
+
+            {/* Adjustment Logs */}
+            <div style={{ marginTop: 20 }}>
+              <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 700 }}>Platform Adjustment History</p>
+              {(() => {
+                const logs = JSON.parse(localStorage.getItem(`sh_wallet_adjust_${p.id}`) || '[]');
+                if (logs.length === 0) {
+                  return <div className="sh-card-meta" style={{ fontStyle: 'italic' }}>No platform adjustments applied yet.</div>;
+                }
+                return (
+                  <div style={{ maxHeight: 150, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 8 }}>
+                    <table className="sh-table" style={{ margin: 0, fontSize: 12 }}>
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Type</th>
+                          <th>Amount</th>
+                          <th>Reason</th>
+                          <th>Balance After</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {logs.map(log => (
+                          <tr key={log.id}>
+                            <td>{log.date}</td>
+                            <td>
+                              <span style={{ 
+                                color: log.type === 'add' ? 'var(--green)' : 'var(--coral)',
+                                fontWeight: 700
+                              }}>
+                                {log.type === 'add' ? 'CREDIT' : 'DEBIT'}
+                              </span>
+                            </td>
+                            <td style={{ fontWeight: 700 }}>
+                              ₹{log.amount}
+                            </td>
+                            <td>{log.reason}</td>
+                            <td>₹{log.balanceAfter}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
@@ -301,18 +490,31 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                 <table className="sh-table">
                   <thead>
                     <tr>
-                      <th>Booking</th><th>Customer</th><th>Provider</th>
-                      <th>Date</th><th>Amount</th><th>Status</th><th></th>
+                      <th>Booking</th>
+                      <th>Customer</th>
+                      <th>Cust Lat/Long</th>
+                      <th>Provider</th>
+                      <th>Provider Lat/Long</th>
+                      <th>Distance</th>
+                      <th>Date</th>
+                      <th>Amount</th>
+                      <th>Status</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredBookings.map(b => {
                       const p = providerFor(b, providers);
+                      const pCoords = getProviderCoordinates(p);
+                      const dist = pCoords ? calculateDistance(b.lat, b.lng, pCoords.lat, pCoords.lng) : '—';
                       return (
                         <tr key={b.id}>
                           <td>#{b.id} · {b.serviceName}</td>
                           <td>{b.customerName}</td>
+                          <td>{b.lat && b.lng ? `${b.lat.toFixed(4)}, ${b.lng.toFixed(4)}` : '—'}</td>
                           <td>{p ? p.name : '—'}</td>
+                          <td>{pCoords ? `${pCoords.lat.toFixed(4)}, ${pCoords.lng.toFixed(4)}` : '—'}</td>
+                          <td>{dist}</td>
                           <td>{b.date}</td>
                           <td className="sh-price">₹{b.price}</td>
                           <td><StatusPill status={b.status} /></td>
@@ -386,6 +588,7 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                   <th>Username</th>
                   <th>Password</th>
                   <th>Active Status</th>
+                  <th>Wallet Balance</th>
                   <th>Price Added</th>
                   <th>Total Attended Works</th>
                   <th>Skill 1</th>
@@ -419,7 +622,8 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                         <span className="sh-pill" style={{ background: '#f1f3f5', color: '#868e96' }}>Inactive</span>
                       )}
                     </td>
-                    <td className="sh-price">₹{p.price || p.charge || 0}</td>
+                    <td style={{ fontWeight: 700, color: 'var(--secondary)' }}>₹{(p.charge || 0).toLocaleString('en-IN')}</td>
+                    <td className="sh-price">₹{p.price || 0}</td>
                     <td>{p.jobs || 0}</td>
                     <td>{skills[0] || '-'}</td>
                     <td>{skills[1] || '-'}</td>
@@ -587,9 +791,9 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
                   <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-light)' }}>Primary Skill</label>
                   <select className="sh-input" value={newProvider.skill} onChange={e => setNewProvider({...newProvider, skill: e.target.value})}>
-                    {[...new Set(SERVICES.map(s => s.skill))].map(skill => (
+                    {services && services.length > 0 ? [...new Set(services.map(s => s.skill))].map(skill => (
                       <option key={skill} value={skill}>{skill}</option>
-                    ))}
+                    )) : <option value="House Help">House Help</option>}
                   </select>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
