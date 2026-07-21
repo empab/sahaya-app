@@ -496,6 +496,7 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                       <th>Provider</th>
                       <th>Provider Lat/Long</th>
                       <th>Distance</th>
+                      <th>Created At</th>
                       <th>Booking Date</th>
                       <th>Booking Time</th>
                       <th>Amount</th>
@@ -516,6 +517,7 @@ export default function AdminApp({ providers, bookings, users, services, updateB
                           <td>{p ? p.name : '—'}</td>
                           <td>{pCoords ? `${pCoords.lat.toFixed(4)}, ${pCoords.lng.toFixed(4)}` : '—'}</td>
                           <td>{dist}</td>
+                          <td>{b.createdAt ? new Date(b.createdAt).toLocaleDateString() : '—'}</td>
                           <td>{b.date || '—'}</td>
                           <td>{b.time || '—'}</td>
                           <td className="sh-price">₹{b.price}</td>
