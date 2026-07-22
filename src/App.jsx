@@ -42,43 +42,49 @@ export default function App() {
     async function init() {
       const savedPortal = localStorage.getItem('sh_portal');
 
-      // Run session check and data fetch simultaneously
-      const [{ data: { session } }, pRes, bRes, sRes, cRes] = await Promise.all([
-        supabase.auth.getSession(),
-        supabase.from('providers').select('*'),
-        supabase.from('bookings').select('*').order('created_at', { ascending: false }),
-        supabase.from('services').select('*').order('id', { ascending: true }),
-        supabase.from('customers').select('*').order('created_at', { ascending: false }),
-      ]);
+      try {
+        // Run session check and data fetch simultaneously with fallbacks
+        const [sessionRes, pRes, bRes, sRes, cRes, mRes] = await Promise.all([
+          supabase.auth.getSession().catch(() => ({ data: { session: null } })),
+          supabase.from('providers').select('*').catch(() => ({ error: true, data: [] })),
+          supabase.from('bookings').select('*').order('created_at', { ascending: false }).catch(() => ({ error: true, data: [] })),
+          supabase.from('services').select('*').order('id', { ascending: true }).catch(() => ({ error: true, data: [] })),
+          supabase.from('customers').select('*').order('created_at', { ascending: false }).catch(() => ({ error: true, data: [] })),
+          supabase.from('marketplace_postings').select('*').order('created_at', { ascending: false }).catch(() => ({ error: true, data: [] })),
+        ]);
 
-      // Set all data at once
-      if (!pRes.error) setProviders(pRes.data);
-      if (!bRes.error) setBookings(bRes.data.map(transformBooking));
-      if (!sRes.error) setServices(sRes.data);
-      if (!cRes.error) {
-        const derivedUsers = cRes.data.map(c => {
-          const userBookings = bRes.data ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone) : [];
-          return {
-            id: c.id,
-            name: c.name || '-',
-            email: c.email || '-',
-            phone: c.phone || '-',
-            password: '*****',
-            joined: c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
-            lastLogin: 'Active',
-            bookingsCount: userBookings.length,
-          };
-        });
-        setUsers(derivedUsers);
+        if (sessionRes?.data?.session) {
+          setSession(sessionRes.data.session);
+        }
+        if (pRes?.data && !pRes.error) setProviders(pRes.data);
+        if (bRes?.data && !bRes.error) setBookings(bRes.data.map(transformBooking));
+        if (sRes?.data && !sRes.error) setServices(sRes.data);
+        if (mRes?.data && !mRes.error && mRes.data.length > 0) setMarketplacePostings(mRes.data);
+        if (cRes?.data && !cRes.error) {
+          const derivedUsers = cRes.data.map(c => {
+            const userBookings = (bRes?.data && Array.isArray(bRes.data)) ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone) : [];
+            return {
+              id: c.id,
+              name: c.name || '-',
+              email: c.email || '-',
+              phone: c.phone || '-',
+              password: '*****',
+              joined: c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+              lastLogin: 'Active',
+              bookingsCount: userBookings.length,
+            };
+          });
+          setUsers(derivedUsers);
+        }
+
+        if (savedPortal && savedPortal !== 'landing') {
+          setPortal(savedPortal);
+        }
+      } catch (err) {
+        console.error('App init error:', err);
+      } finally {
+        setIsLoading(false);
       }
-
-      // Restore session and portal BEFORE removing isLoading
-      setSession(session);
-      if (savedPortal && savedPortal !== 'landing') {
-        setPortal(savedPortal);
-      }
-
-      setIsLoading(false);
     }
 
     init();
