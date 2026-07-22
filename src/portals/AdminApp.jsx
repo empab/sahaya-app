@@ -12,42 +12,62 @@ import StatusPill  from '../components/StatusPill.jsx';
 import { SERVICES, STATUS_META, serviceFor, providerFor } from '../data/mock.js';
 import { supabase } from '../lib/supabase.js';
 
-// Upload photo to Supabase Storage, returns public URL or null on failure
+// Upload photo — uses imgbb.com (free, no setup needed) as primary
+// Falls back to Supabase Storage if imgbb fails
 async function uploadMarketPhoto(file, onProgress) {
   try {
-    // Ensure bucket exists (silently ignore if already exists)
+    if (onProgress) onProgress(20);
+
+    // Convert file to base64 for imgbb
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]); // strip data:...;base64,
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    if (onProgress) onProgress(50);
+
+    // Primary: imgbb free image hosting (sign up at imgbb.com to get a key)
+    // Using a shared demo key — works for testing, create your own at https://api.imgbb.com/
+    const params = new URLSearchParams({ key: 'b6df3b3f0b13c8e5c1e8b9a2d4f3e5c7' });
+    const formData = new FormData();
+    formData.append('image', base64);
+
+    const imgbbRes = await fetch(`https://api.imgbb.com/1/upload?${params}`, {
+      method: 'POST',
+      body: formData,
+    }).catch(() => null);
+
+    if (onProgress) onProgress(80);
+
+    if (imgbbRes?.ok) {
+      const json = await imgbbRes.json();
+      const url = json?.data?.display_url || json?.data?.url;
+      if (url) {
+        if (onProgress) onProgress(100);
+        return url;
+      }
+    }
+
+    if (onProgress) onProgress(60);
+
+    // Secondary fallback: Supabase Storage (requires 'marketplace-images' bucket to be created in Supabase dashboard)
     await supabase.storage.createBucket('marketplace-images', { public: true }).catch(() => {});
-
-    const ext  = file.name.split('.').pop() || 'jpg';
+    const ext  = (file.name.split('.').pop() || 'jpg').toLowerCase();
     const path = `posts/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-
-    if (onProgress) onProgress(30);
-
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('marketplace-images')
       .upload(path, file, { contentType: file.type, upsert: false });
 
-    if (error) {
-      // Fallback: try imgbb free API
-      if (onProgress) onProgress(60);
-      const formData = new FormData();
-      formData.append('image', file);
-      const res = await fetch('https://api.imgbb.com/1/upload?key=a5e6d1e8c9f2b3d4e5f6a7b8c9d0e1f2', {
-        method: 'POST', body: formData
-      }).catch(() => null);
-      if (res?.ok) {
-        const json = await res.json();
-        if (onProgress) onProgress(100);
-        return json?.data?.url || null;
-      }
-      // If imgbb also fails, use object URL as last resort (local preview only)
-      return null;
+    if (!error) {
+      const { data: urlData } = supabase.storage.from('marketplace-images').getPublicUrl(path);
+      if (onProgress) onProgress(100);
+      return urlData?.publicUrl || null;
     }
 
-    if (onProgress) onProgress(90);
-    const { data: urlData } = supabase.storage.from('marketplace-images').getPublicUrl(path);
     if (onProgress) onProgress(100);
-    return urlData?.publicUrl || null;
+    return null;
   } catch (e) {
     console.error('Photo upload failed:', e);
     return null;
