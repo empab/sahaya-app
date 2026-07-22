@@ -43,69 +43,41 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load auth session AND app data together before showing any UI
     async function init() {
-      const savedPortal = localStorage.getItem('sh_portal');
-
       try {
-        // Run session check and data fetch simultaneously from real Supabase DB
-        const [sessionRes, pRes, bRes, sRes, cRes, mRes] = await Promise.all([
-          supabase.auth.getSession().catch(() => ({ data: { session: null } })),
-          supabase.from('providers').select('*').catch(() => ({ error: true, data: [] })),
-          supabase.from('bookings').select('*').order('created_at', { ascending: false }).catch(() => ({ error: true, data: [] })),
-          supabase.from('services').select('*').order('id', { ascending: true }).catch(() => ({ error: true, data: [] })),
-          supabase.from('customers').select('*').order('created_at', { ascending: false }).catch(() => ({ error: true, data: [] })),
-          supabase.from('marketplace_postings').select('*').order('created_at', { ascending: false }).catch(() => ({ error: true, data: [] })),
-        ]);
+        // Fetch all data individually with proper error handling
+        // Supabase query builders don't support .catch() — must use await + try/catch
+        let pData = [], bData = [], sData = [], cData = [], mData = [];
+        let sessionData = null;
 
-        if (sessionRes?.data?.session) {
-          setSession(sessionRes.data.session);
-        }
-        
-        if (pRes?.data && Array.isArray(pRes.data) && pRes.data.length > 0) {
-          setProviders(pRes.data);
-        } else {
-          setProviders(INITIAL_PROVIDERS);
-        }
+        try { const r = await supabase.auth.getSession(); sessionData = r?.data?.session || null; } catch(e) { /**/ }
+        try { const r = await supabase.from('providers').select('*'); if (!r.error && r.data) pData = r.data; } catch(e) { /**/ }
+        try { const r = await supabase.from('bookings').select('*').order('created_at', { ascending: false }); if (!r.error && r.data) bData = r.data; } catch(e) { /**/ }
+        try { const r = await supabase.from('services').select('*').order('id', { ascending: true }); if (!r.error && r.data) sData = r.data; } catch(e) { /**/ }
+        try { const r = await supabase.from('customers').select('*').order('created_at', { ascending: false }); if (!r.error && r.data) cData = r.data; } catch(e) { /**/ }
+        try { const r = await supabase.from('marketplace_postings').select('*').order('created_at', { ascending: false }); if (!r.error && r.data) mData = r.data; } catch(e) { /**/ }
 
-        if (bRes?.data && Array.isArray(bRes.data) && bRes.data.length > 0) {
-          setBookings(bRes.data.map(transformBooking));
-        } else {
-          setBookings(INITIAL_BOOKINGS);
-        }
+        if (sessionData) setSession(sessionData);
 
-        if (sRes?.data && Array.isArray(sRes.data) && sRes.data.length > 0) {
-          setServices(sRes.data);
-        } else {
-          setServices(SERVICES);
-        }
+        setProviders(pData.length > 0 ? pData : INITIAL_PROVIDERS);
+        setBookings(bData.length > 0 ? bData.map(transformBooking) : INITIAL_BOOKINGS);
+        setServices(sData.length > 0 ? sData : SERVICES);
+        setMarketplacePostings(mData.length > 0 ? mData : INITIAL_MARKETPLACE_POSTINGS);
 
-        if (mRes?.data && Array.isArray(mRes.data) && mRes.data.length > 0) {
-          setMarketplacePostings(mRes.data);
-        } else {
-          setMarketplacePostings(INITIAL_MARKETPLACE_POSTINGS);
-        }
-
-        if (cRes?.data && Array.isArray(cRes.data) && cRes.data.length > 0) {
-          const derivedUsers = cRes.data.map(c => {
-            const userBookings = (bRes?.data && Array.isArray(bRes.data)) ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone || b.customer_name === c.name) : [];
-            return {
-              id: c.id,
-              name: c.name || '-',
-              email: c.email || '-',
-              phone: c.phone || '-',
-              password: '*****',
-              joined: c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
-              lastLogin: 'Active',
-              bookingsCount: userBookings.length,
-            };
-          });
-          setUsers(derivedUsers);
+        if (cData.length > 0) {
+          setUsers(cData.map(c => ({
+            id: c.id,
+            name: c.name || '-',
+            email: c.email || '-',
+            phone: c.phone || '-',
+            password: '*****',
+            joined: c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+            lastLogin: 'Active',
+            bookingsCount: bData.filter(b => b.phone === c.phone || b.customer_name === c.name).length,
+          })));
         } else {
           setUsers(INITIAL_USERS);
         }
-
-        // Portal already restored synchronously from localStorage — no need to setPortal again here
       } catch (err) {
         console.error('App init error:', err);
       } finally {
@@ -150,33 +122,28 @@ export default function App() {
 
   async function fetchData() {
     try {
-      const [pRes, bRes, sRes, cRes, mRes] = await Promise.all([
-        supabase.from('providers').select('*').catch(() => ({ error: true, data: [] })),
-        supabase.from('bookings').select('*').order('created_at', { ascending: false }).catch(() => ({ error: true, data: [] })),
-        supabase.from('services').select('*').order('id', { ascending: true }).catch(() => ({ error: true, data: [] })),
-        supabase.from('customers').select('*').order('created_at', { ascending: false }).catch(() => ({ error: true, data: [] })),
-        supabase.from('marketplace_postings').select('*').order('created_at', { ascending: false }).catch(() => ({ error: true, data: [] })),
-      ]);
+      let pData = [], bData = [], sData = [], cData = [], mData = [];
+      try { const r = await supabase.from('providers').select('*'); if (!r.error && r.data) pData = r.data; } catch(e) { /**/ }
+      try { const r = await supabase.from('bookings').select('*').order('created_at', { ascending: false }); if (!r.error && r.data) bData = r.data; } catch(e) { /**/ }
+      try { const r = await supabase.from('services').select('*').order('id', { ascending: true }); if (!r.error && r.data) sData = r.data; } catch(e) { /**/ }
+      try { const r = await supabase.from('customers').select('*').order('created_at', { ascending: false }); if (!r.error && r.data) cData = r.data; } catch(e) { /**/ }
+      try { const r = await supabase.from('marketplace_postings').select('*').order('created_at', { ascending: false }); if (!r.error && r.data) mData = r.data; } catch(e) { /**/ }
 
-      if (mRes?.data && !mRes.error && mRes.data.length > 0) setMarketplacePostings(mRes.data);
-      if (pRes?.data && !pRes.error && pRes.data.length > 0) setProviders(pRes.data);
-      if (bRes?.data && !bRes.error && bRes.data.length > 0) setBookings(bRes.data.map(transformBooking));
-      if (sRes?.data && !sRes.error && sRes.data.length > 0) setServices(sRes.data);
-      if (cRes?.data && !cRes.error && cRes.data.length > 0) {
-        const derivedUsers = cRes.data.map(c => {
-          const userBookings = bRes.data ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone || b.customer_name === c.name) : [];
-          return {
-            id: c.id,
-            name: c.name || '-',
-            email: c.email || '-',
-            phone: c.phone || '-',
-            password: '*****',
-            joined: c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
-            lastLogin: 'Active',
-            bookingsCount: userBookings.length,
-          };
-        });
-        setUsers(derivedUsers);
+      if (pData.length > 0) setProviders(pData);
+      if (bData.length > 0) setBookings(bData.map(transformBooking));
+      if (sData.length > 0) setServices(sData);
+      if (mData.length > 0) setMarketplacePostings(mData);
+      if (cData.length > 0) {
+        setUsers(cData.map(c => ({
+          id: c.id,
+          name: c.name || '-',
+          email: c.email || '-',
+          phone: c.phone || '-',
+          password: '*****',
+          joined: c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+          lastLogin: 'Active',
+          bookingsCount: bData.filter(b => b.phone === c.phone || b.customer_name === c.name).length,
+        })));
       }
     } catch (err) {
       console.log('fetchData background refresh fallback', err);
