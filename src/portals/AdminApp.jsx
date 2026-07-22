@@ -3,12 +3,21 @@ import {
   BarChart3, ClipboardList, LayoutGrid, Users, LogOut,
   Shield, Wallet, Briefcase, MapPin, Check, X,
   ShieldCheck, Star, Search, ChevronRight, ArrowLeft,
-  ShoppingBag, Pencil, Trash2, Plus, Tag
+  ShoppingBag, Pencil, Trash2, Plus, Tag,
+  Eye, Image as ImageIcon, ExternalLink, Copy
 } from 'lucide-react';
 
 import LoginScreen from '../components/LoginScreen.jsx';
 import StatusPill  from '../components/StatusPill.jsx';
 import { SERVICES, STATUS_META, serviceFor, providerFor } from '../data/mock.js';
+
+const PRESET_MARKET_IMAGES = [
+  { label: '🛋️ Sofa / Furniture', url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80' },
+  { label: '📱 Electronics', url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=600&q=80' },
+  { label: '🚗 Vehicle / Car', url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80' },
+  { label: '🛠️ Tools & Equipment', url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80' },
+  { label: '🏠 Property / House', url: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=600&q=80' },
+];
 
 function getProviderCoordinates(provider) {
   if (!provider) return null;
@@ -84,6 +93,8 @@ export default function AdminApp({
   // Marketplace Management State
   const [showCreateMarketPost, setShowCreateMarketPost] = useState(false);
   const [editingMarketPost, setEditingMarketPost]       = useState(null);
+  const [previewImagePost, setPreviewImagePost]         = useState(null);
+  const [copiedUrl, setCopiedUrl]                       = useState(false);
   const [marketSearch, setMarketSearch]                 = useState('');
   const [marketTypeFilter, setMarketTypeFilter]         = useState('all');
   const [newMarketPost, setNewMarketPost]               = useState({
@@ -835,12 +846,27 @@ export default function AdminApp({
                     <tr key={p.id}>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <img
-                            src={p.imageUrl || p.image_url || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=120&q=80'}
-                            alt=""
-                            style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }}
-                            onError={e => { e.target.src = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=120&q=80'; }}
-                          />
+                          <div
+                            style={{ position: 'relative', width: 48, height: 48, borderRadius: 8, overflow: 'hidden', cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}
+                            title="Click to view & manage full image"
+                            onClick={() => setPreviewImagePost(p)}
+                          >
+                            <img
+                              src={p.imageUrl || p.image_url || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=120&q=80'}
+                              alt=""
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.2s ease' }}
+                              onError={e => { e.target.src = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=120&q=80'; }}
+                            />
+                            <div style={{
+                              position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex',
+                              alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                            onMouseLeave={e => e.currentTarget.style.opacity = '0'}
+                            >
+                              <Eye size={16} color="#fff" />
+                            </div>
+                          </div>
                           <div>
                             <div style={{ fontWeight: 600, fontSize: 14 }}>{p.title}</div>
                             <div style={{ fontSize: 12, color: 'var(--text-light)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -870,7 +896,15 @@ export default function AdminApp({
                       <td>{p.locationName || p.location_name || 'Calicut'}</td>
                       <td>{p.contactPhone || p.contact_phone || '-'}</td>
                       <td>
-                        <div style={{ display: 'flex', gap: 8 }}>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            className="sh-btn sh-btn-sm sh-btn-ghost"
+                            style={{ padding: '6px 10px', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                            onClick={() => setPreviewImagePost(p)}
+                            title="View / Manage Image"
+                          >
+                            <ImageIcon size={13} color="var(--teal)" /> Image
+                          </button>
                           <button
                             className="sh-btn sh-btn-sm sh-btn-ghost"
                             style={{ padding: '6px 10px', display: 'inline-flex', alignItems: 'center', gap: 4 }}
@@ -1091,13 +1125,27 @@ export default function AdminApp({
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Photo Image URL (Optional)</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Photo Image URL</label>
                 <input
                   className="sh-input"
                   placeholder="https://images.unsplash.com/..."
                   value={newMarketPost.image_url}
                   onChange={e => setNewMarketPost({ ...newMarketPost, image_url: e.target.value })}
                 />
+                <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 6, marginBottom: 4 }}>Or select a quick sample image:</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {PRESET_MARKET_IMAGES.map((img, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className="sh-btn sh-btn-sm sh-btn-ghost"
+                      style={{ padding: '3px 8px', fontSize: 11 }}
+                      onClick={() => setNewMarketPost({ ...newMarketPost, image_url: img.url })}
+                    >
+                      {img.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
@@ -1203,6 +1251,20 @@ export default function AdminApp({
                   value={editingMarketPost.imageUrl || editingMarketPost.image_url || ''}
                   onChange={e => setEditingMarketPost({ ...editingMarketPost, image_url: e.target.value, imageUrl: e.target.value })}
                 />
+                <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 6, marginBottom: 4 }}>Or replace with a quick sample image:</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {PRESET_MARKET_IMAGES.map((img, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className="sh-btn sh-btn-sm sh-btn-ghost"
+                      style={{ padding: '3px 8px', fontSize: 11 }}
+                      onClick={() => setEditingMarketPost({ ...editingMarketPost, image_url: img.url, imageUrl: img.url })}
+                    >
+                      {img.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
@@ -1220,6 +1282,81 @@ export default function AdminApp({
                 <button type="button" className="sh-btn" onClick={() => setEditingMarketPost(null)}>Cancel</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Image Preview & Management Modal */}
+      {previewImagePost && (
+        <div className="sh-modal-backdrop" onClick={() => setPreviewImagePost(null)}>
+          <div className="sh-modal" style={{ maxWidth: 640, padding: 0, overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+            <div style={{ position: 'relative', width: '100%', height: 320, background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img
+                src={previewImagePost.imageUrl || previewImagePost.image_url || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80'}
+                alt=""
+                style={{ maxWidth: '100%', maxHeight: 320, objectFit: 'contain' }}
+              />
+              <button
+                className="sh-btn sh-btn-ghost"
+                style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.6)', color: '#fff', padding: 6, borderRadius: 20 }}
+                onClick={() => setPreviewImagePost(null)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ padding: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{previewImagePost.title}</h3>
+                  <div style={{ fontSize: 13, color: 'var(--text-light)', marginTop: 4 }}>
+                    Category: <b>{previewImagePost.category}</b> &nbsp;&bull;&nbsp; Location: <b>{previewImagePost.locationName || previewImagePost.location_name || 'Calicut'}</b>
+                  </div>
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--teal-dark)' }}>
+                  ₹{(previewImagePost.price || 0).toLocaleString('en-IN')}
+                </div>
+              </div>
+
+              <div style={{ background: '#f8f9fa', padding: 12, borderRadius: 8, fontSize: 12, fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: 16, color: '#495057' }}>
+                {previewImagePost.imageUrl || previewImagePost.image_url || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80'}
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <a
+                  href={previewImagePost.imageUrl || previewImagePost.image_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="sh-btn sh-btn-ghost sh-btn-sm"
+                  style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                >
+                  <ExternalLink size={14} /> Open Original
+                </a>
+                <button
+                  className="sh-btn sh-btn-ghost sh-btn-sm"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  onClick={() => {
+                    const imgUrl = previewImagePost.imageUrl || previewImagePost.image_url || '';
+                    navigator.clipboard.writeText(imgUrl);
+                    setCopiedUrl(true);
+                    setTimeout(() => setCopiedUrl(false), 2000);
+                  }}
+                >
+                  {copiedUrl ? <Check size={14} color="green" /> : <Copy size={14} />}
+                  {copiedUrl ? 'Copied Link!' : 'Copy Image Link'}
+                </button>
+                <button
+                  className="sh-btn sh-btn-primary sh-btn-sm"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  onClick={() => {
+                    setEditingMarketPost(previewImagePost);
+                    setPreviewImagePost(null);
+                  }}
+                >
+                  <Pencil size={14} /> Change Image / Edit
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
