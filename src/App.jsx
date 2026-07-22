@@ -31,6 +31,9 @@ function transformBooking(b) {
 export default function App() {
   // Read portal synchronously so reloads never lose the current portal
   const [portal,    setPortal]    = useState(() => {
+    const hash = (window.location.hash || '').replace('#', '');
+    const adminSections = ['dashboard', 'bookings', 'marketplace', 'providers', 'services', 'users'];
+    if (hash && adminSections.includes(hash)) return 'admin';
     const saved = localStorage.getItem('sh_portal');
     return (saved && saved !== 'landing') ? saved : 'landing';
   });

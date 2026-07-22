@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   BarChart3, ClipboardList, LayoutGrid, Users, LogOut,
   Shield, Wallet, Briefcase, MapPin, Check, X,
@@ -117,7 +117,32 @@ export default function AdminApp({
   marketplacePostings = [], addMarketplacePosting, updateMarketplacePosting, deleteMarketplacePosting, onExit
 }) {
   const [authed,         setAuthed]         = useState(() => localStorage.getItem('sh_admin_auth') === 'true');
-  const [section,        setSection]        = useState('dashboard');
+  const [section,        setSectionState]   = useState(() => {
+    const hash = (window.location.hash || '').replace('#', '');
+    const valid = ['dashboard', 'bookings', 'marketplace', 'providers', 'services', 'users'];
+    if (hash && valid.includes(hash)) return hash;
+    const saved = localStorage.getItem('sh_admin_section');
+    if (saved && valid.includes(saved)) return saved;
+    return 'dashboard';
+  });
+
+  function setSection(secKey) {
+    setSectionState(secKey);
+    window.location.hash = secKey;
+    localStorage.setItem('sh_admin_section', secKey);
+  }
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = (window.location.hash || '').replace('#', '');
+      const valid = ['dashboard', 'bookings', 'marketplace', 'providers', 'services', 'users'];
+      if (hash && valid.includes(hash)) {
+        setSectionState(hash);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
   const [bookingFilter,  setBookingFilter]  = useState('all');
   const [bookingSearch,  setBookingSearch]  = useState('');
   const [providerDetail, setProviderDetail] = useState(null);
@@ -1559,16 +1584,23 @@ function Sidebar({ section, setSection, onExit }) {
         <b>Sahaya Admin</b>
       </div>
       {SIDEBAR_ITEMS.map(it => (
-        <div
+        <a
           key={it.key}
+          href={`#${it.key}`}
           className={'sh-side-item' + (section === it.key ? ' active' : '')}
-          onClick={() => setSection(it.key)}
+          onClick={(e) => {
+            if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
+              e.preventDefault();
+              setSection(it.key);
+            }
+          }}
+          style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 10 }}
         >
           <it.icon size={16} /> {it.label}
-        </div>
+        </a>
       ))}
       <div className="sh-side-footer">
-        <div className="sh-side-item" onClick={onExit}><LogOut size={16} /> Exit demo</div>
+        <div className="sh-side-item" onClick={onExit} style={{ cursor: 'pointer' }}><LogOut size={16} /> Exit demo</div>
       </div>
     </div>
   );
