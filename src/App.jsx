@@ -247,6 +247,15 @@ export default function App() {
     }
   }
 
+  async function updateService(id, patch) {
+    try {
+      await supabase.from('services').update(patch).eq('id', id);
+    } catch (e) {
+      console.log('Local update service fallback', e);
+    }
+    setServices(prev => prev.map(s => (s.id === id ? { ...s, ...patch } : s)));
+  }
+
   const [marketplacePostings, setMarketplacePostings] = useState(INITIAL_MARKETPLACE_POSTINGS);
 
   async function addMarketplacePosting(posting) {
