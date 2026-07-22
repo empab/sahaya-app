@@ -12,58 +12,32 @@ import StatusPill  from '../components/StatusPill.jsx';
 import { SERVICES, STATUS_META, serviceFor, providerFor } from '../data/mock.js';
 import { supabase } from '../lib/supabase.js';
 
-// Upload photo — uses imgbb.com (free, no setup needed) as primary
-// Falls back to Supabase Storage if imgbb fails
+// Upload photo directly to Supabase Storage ('marketplace-images' bucket)
 async function uploadMarketPhoto(file, onProgress) {
   try {
     if (onProgress) onProgress(20);
 
-    // Convert file to base64 for imgbb
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result.split(',')[1]); // strip data:...;base64,
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+    const ext  = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `posts/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
 
     if (onProgress) onProgress(50);
 
-    // Primary: imgbb free image hosting (sign up at imgbb.com to get a key)
-    // Using a shared demo key — works for testing, create your own at https://api.imgbb.com/
-    const params = new URLSearchParams({ key: 'b6df3b3f0b13c8e5c1e8b9a2d4f3e5c7' });
-    const formData = new FormData();
-    formData.append('image', base64);
-
-    const imgbbRes = await fetch(`https://api.imgbb.com/1/upload?${params}`, {
-      method: 'POST',
-      body: formData,
-    }).catch(() => null);
+    const { data, error } = await supabase.storage
+      .from('marketplace-images')
+      .upload(path, file, { contentType: file.type, upsert: true });
 
     if (onProgress) onProgress(80);
 
-    if (imgbbRes?.ok) {
-      const json = await imgbbRes.json();
-      const url = json?.data?.display_url || json?.data?.url;
-      if (url) {
+    if (!error && data) {
+      const { data: urlData } = supabase.storage.from('marketplace-images').getPublicUrl(path);
+      if (urlData?.publicUrl) {
         if (onProgress) onProgress(100);
-        return url;
+        return urlData.publicUrl;
       }
     }
 
-    if (onProgress) onProgress(60);
-
-    // Secondary fallback: Supabase Storage (requires 'marketplace-images' bucket to be created in Supabase dashboard)
-    await supabase.storage.createBucket('marketplace-images', { public: true }).catch(() => {});
-    const ext  = (file.name.split('.').pop() || 'jpg').toLowerCase();
-    const path = `posts/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage
-      .from('marketplace-images')
-      .upload(path, file, { contentType: file.type, upsert: false });
-
-    if (!error) {
-      const { data: urlData } = supabase.storage.from('marketplace-images').getPublicUrl(path);
-      if (onProgress) onProgress(100);
-      return urlData?.publicUrl || null;
+    if (error) {
+      console.warn('Supabase storage upload error:', error.message);
     }
 
     if (onProgress) onProgress(100);
