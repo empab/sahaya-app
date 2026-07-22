@@ -3,7 +3,7 @@ import Landing     from './portals/Landing.jsx';
 import UserApp     from './portals/UserApp.jsx';
 import ProviderApp from './portals/ProviderApp.jsx';
 import AdminApp    from './portals/AdminApp.jsx';
-import { INITIAL_USERS } from './data/mock.js';
+import { INITIAL_USERS, INITIAL_MARKETPLACE_POSTINGS } from './data/mock.js';
 import { supabase } from './lib/supabase.js';
 
 // Helper to convert DB snake_case to app camelCase
@@ -235,14 +235,57 @@ export default function App() {
     }
   }
 
-  async function updateService(id, patch) {
-    const { error } = await supabase.from('services').update(patch).eq('id', id);
-    if (!error) {
-      setServices(prev => prev.map(s => (s.id === id ? { ...s, ...patch } : s)));
+  const [marketplacePostings, setMarketplacePostings] = useState(INITIAL_MARKETPLACE_POSTINGS);
+
+  async function addMarketplacePosting(posting) {
+    try {
+      const { data, error } = await supabase.from('marketplace_postings').insert({
+        title: posting.title,
+        category: posting.category,
+        type: posting.type,
+        price: parseInt(posting.price) || 0,
+        description: posting.description,
+        image_url: posting.imageUrl || posting.image_url,
+        contact_phone: posting.contactPhone || posting.contact_phone,
+        location_name: posting.locationName || posting.location_name,
+        lat: posting.lat || 11.1495,
+        lng: posting.lng || 75.9723,
+      }).select();
+
+      if (!error && data && data.length > 0) {
+        setMarketplacePostings(prev => [data[0], ...prev]);
+      } else {
+        const newPost = { id: Date.now(), ...posting };
+        setMarketplacePostings(prev => [newPost, ...prev]);
+      }
+    } catch (e) {
+      const newPost = { id: Date.now(), ...posting };
+      setMarketplacePostings(prev => [newPost, ...prev]);
     }
   }
 
-  const sharedProps = { bookings, updateBooking, providers, updateProvider, addProvider, users, services, addService, updateService, session };
+  async function updateMarketplacePosting(id, patch) {
+    try {
+      await supabase.from('marketplace_postings').update(patch).eq('id', id);
+    } catch (e) {
+      console.log('Local update fallback', e);
+    }
+    setMarketplacePostings(prev => prev.map(p => (p.id === id ? { ...p, ...patch } : p)));
+  }
+
+  async function deleteMarketplacePosting(id) {
+    try {
+      await supabase.from('marketplace_postings').delete().eq('id', id);
+    } catch (e) {
+      console.log('Local delete fallback', e);
+    }
+    setMarketplacePostings(prev => prev.filter(p => p.id !== id));
+  }
+
+  const sharedProps = { 
+    bookings, updateBooking, providers, updateProvider, addProvider, users, services, addService, updateService, session,
+    marketplacePostings, addMarketplacePosting, updateMarketplacePosting, deleteMarketplacePosting
+  };
 
   if (isLoading) return <div style={{padding: 40}}>Loading App Data...</div>;
 

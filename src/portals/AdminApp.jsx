@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import {
   BarChart3, ClipboardList, LayoutGrid, Users, LogOut,
   Shield, Wallet, Briefcase, MapPin, Check, X,
-  ShieldCheck, Star, Search, ChevronRight, ArrowLeft
+  ShieldCheck, Star, Search, ChevronRight, ArrowLeft,
+  ShoppingBag, Pencil, Trash2, Plus, Tag
 } from 'lucide-react';
 
 import LoginScreen from '../components/LoginScreen.jsx';
@@ -55,16 +56,20 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 const SIDEBAR_ITEMS = [
-  { key: 'dashboard', label: 'Dashboard',       icon: BarChart3 },
-  { key: 'bookings',  label: 'Bookings',         icon: ClipboardList },
-  { key: 'providers', label: 'Service Providers', icon: Briefcase },
-  { key: 'services',  label: 'Services',         icon: LayoutGrid },
-  { key: 'users',     label: 'Users',            icon: Users },
+  { key: 'dashboard',   label: 'Dashboard',        icon: BarChart3 },
+  { key: 'bookings',    label: 'Bookings',          icon: ClipboardList },
+  { key: 'marketplace', label: 'Community Market', icon: ShoppingBag },
+  { key: 'providers',   label: 'Service Providers', icon: Briefcase },
+  { key: 'services',    label: 'Services',          icon: LayoutGrid },
+  { key: 'users',       label: 'Users',             icon: Users },
 ];
 
 
 
-export default function AdminApp({ providers, bookings, users, services, updateBooking, updateProvider, addProvider, addService, updateService, onExit }) {
+export default function AdminApp({
+  providers, bookings, users, services, updateBooking, updateProvider, addProvider, addService, updateService,
+  marketplacePostings = [], addMarketplacePosting, updateMarketplacePosting, deleteMarketplacePosting, onExit
+}) {
   const [authed,         setAuthed]         = useState(() => localStorage.getItem('sh_admin_auth') === 'true');
   const [section,        setSection]        = useState('dashboard');
   const [bookingFilter,  setBookingFilter]  = useState('all');
@@ -75,6 +80,36 @@ export default function AdminApp({ providers, bookings, users, services, updateB
   const [showCreateService, setShowCreateService] = useState(false);
   const [newService, setNewService] = useState({ name: '', price: '', skill: '' });
   const [editingService, setEditingService] = useState(null);
+
+  // Marketplace Management State
+  const [showCreateMarketPost, setShowCreateMarketPost] = useState(false);
+  const [editingMarketPost, setEditingMarketPost]       = useState(null);
+  const [marketSearch, setMarketSearch]                 = useState('');
+  const [marketTypeFilter, setMarketTypeFilter]         = useState('all');
+  const [newMarketPost, setNewMarketPost]               = useState({
+    title: '', category: 'Local Sales', type: 'sale', price: '', description: '', contact_phone: '+91 ', location_name: 'Calicut', image_url: ''
+  });
+
+  function handleCreateMarketPost(e) {
+    e.preventDefault();
+    if (!newMarketPost.title.trim()) return;
+    addMarketplacePosting?.(newMarketPost);
+    setShowCreateMarketPost(false);
+    setNewMarketPost({ title: '', category: 'Local Sales', type: 'sale', price: '', description: '', contact_phone: '+91 ', location_name: 'Calicut', image_url: '' });
+  }
+
+  function handleUpdateMarketPost(e) {
+    e.preventDefault();
+    if (!editingMarketPost || !editingMarketPost.id) return;
+    updateMarketplacePosting?.(editingMarketPost.id, editingMarketPost);
+    setEditingMarketPost(null);
+  }
+
+  function handleDeleteMarketPost(id) {
+    if (window.confirm('Are you sure you want to delete this marketplace posting?')) {
+      deleteMarketplacePosting?.(id);
+    }
+  }
 
   function handleCreateProvider(e) {
     e.preventDefault();
@@ -737,6 +772,127 @@ export default function AdminApp({ providers, bookings, users, services, updateB
             </table>
           </>
         )}
+
+        {/* ---- COMMUNITY MARKETPLACE MANAGEMENT ---- */}
+        {section === 'marketplace' && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div>
+                <h2 className="sh-section-title">Community Marketplace</h2>
+                <p className="sh-section-sub">Manage customer postings, requirements, and local items for sale</p>
+              </div>
+              <button className="sh-btn sh-btn-primary" onClick={() => setShowCreateMarketPost(true)}>
+                + Create Market Post
+              </button>
+            </div>
+
+            {/* Search & Filter Bar */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 20, alignItems: 'center' }}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <Search size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-light)' }} />
+                <input
+                  type="text"
+                  className="sh-input"
+                  style={{ paddingLeft: 36 }}
+                  placeholder="Search postings by title, category, or description..."
+                  value={marketSearch}
+                  onChange={e => setMarketSearch(e.target.value)}
+                />
+              </div>
+              <select
+                className="sh-input"
+                style={{ width: 200 }}
+                value={marketTypeFilter}
+                onChange={e => setMarketTypeFilter(e.target.value)}
+              >
+                <option value="all">All Types</option>
+                <option value="sale">🛍️ For Sale</option>
+                <option value="requirement">📢 Requirement Needed</option>
+              </select>
+            </div>
+
+            <table className="sh-table">
+              <thead>
+                <tr>
+                  <th>Posting Item / Requirement</th>
+                  <th>Type & Category</th>
+                  <th>Price / Budget</th>
+                  <th>Location</th>
+                  <th>Contact Phone</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {marketplacePostings
+                  .filter(p => {
+                    const matchesSearch = (p.title || '').toLowerCase().includes(marketSearch.toLowerCase()) ||
+                      (p.description || '').toLowerCase().includes(marketSearch.toLowerCase()) ||
+                      (p.category || '').toLowerCase().includes(marketSearch.toLowerCase());
+                    const matchesType = marketTypeFilter === 'all' || p.type === marketTypeFilter;
+                    return matchesSearch && matchesType;
+                  })
+                  .map(p => (
+                    <tr key={p.id}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <img
+                            src={p.imageUrl || p.image_url || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=120&q=80'}
+                            alt=""
+                            style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }}
+                            onError={e => { e.target.src = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=120&q=80'; }}
+                          />
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: 14 }}>{p.title}</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-light)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {p.description}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <span
+                            className="sh-pill"
+                            style={{
+                              background: p.type === 'requirement' ? 'rgba(255, 159, 28, 0.15)' : 'rgba(46, 196, 182, 0.15)',
+                              color: p.type === 'requirement' ? '#e67e22' : '#0f9384',
+                              fontWeight: 700,
+                            }}
+                          >
+                            {p.type === 'requirement' ? '📢 Requirement' : '🛍️ For Sale'}
+                          </span>
+                          <span style={{ fontSize: 12, color: 'var(--text-light)' }}>{p.category}</span>
+                        </div>
+                      </td>
+                      <td style={{ fontWeight: 700, color: 'var(--teal-dark)' }}>
+                        ₹{(p.price || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td>{p.locationName || p.location_name || 'Calicut'}</td>
+                      <td>{p.contactPhone || p.contact_phone || '-'}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button
+                            className="sh-btn sh-btn-sm sh-btn-ghost"
+                            style={{ padding: '6px 10px', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                            onClick={() => setEditingMarketPost(p)}
+                          >
+                            <Pencil size={13} /> Edit
+                          </button>
+                          <button
+                            className="sh-btn sh-btn-sm"
+                            style={{ padding: '6px 10px', background: '#ffe3e3', color: '#e03131', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                            onClick={() => handleDeleteMarketPost(p.id)}
+                          >
+                            <Trash2 size={13} /> Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </>
+        )}
       </div>
       {/* Create Provider Modal */}
       {showCreateProvider && (
@@ -848,6 +1004,220 @@ export default function AdminApp({ providers, bookings, users, services, updateB
               <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
                 <button type="submit" className="sh-btn sh-btn-primary">Save Changes</button>
                 <button type="button" className="sh-btn" onClick={() => setEditingService(null)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Create Market Post Modal */}
+      {showCreateMarketPost && (
+        <div className="sh-modal-backdrop">
+          <div className="sh-modal" style={{ maxWidth: 500 }}>
+            <h2 className="sh-section-title">Create Marketplace Posting</h2>
+            <p className="sh-section-sub" style={{ marginBottom: 16 }}>Publish a local sale, requirement, or official community offer</p>
+            <form onSubmit={handleCreateMarketPost} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Posting Type</label>
+                  <select
+                    className="sh-input"
+                    value={newMarketPost.type}
+                    onChange={e => setNewMarketPost({ ...newMarketPost, type: e.target.value, category: e.target.value === 'requirement' ? 'Requirements' : 'Local Sales' })}
+                  >
+                    <option value="sale">🛍️ For Sale</option>
+                    <option value="requirement">📢 Requirement Needed</option>
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Category</label>
+                  <select
+                    className="sh-input"
+                    value={newMarketPost.category}
+                    onChange={e => setNewMarketPost({ ...newMarketPost, category: e.target.value })}
+                  >
+                    <option value="Local Sales">Local Sales</option>
+                    <option value="Requirements">Requirements</option>
+                    <option value="Used Goods">Used Goods</option>
+                    <option value="Services Needed">Services Needed</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Title</label>
+                <input
+                  className="sh-input"
+                  placeholder="Posting Title (e.g. Second Hand Teakwood Sofa)"
+                  required
+                  value={newMarketPost.title}
+                  onChange={e => setNewMarketPost({ ...newMarketPost, title: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Price / Budget (₹)</label>
+                  <input
+                    className="sh-input"
+                    type="number"
+                    placeholder="e.g. 2500"
+                    required
+                    value={newMarketPost.price}
+                    onChange={e => setNewMarketPost({ ...newMarketPost, price: e.target.value })}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Contact Phone</label>
+                  <input
+                    className="sh-input"
+                    placeholder="+91 98765 43210"
+                    required
+                    value={newMarketPost.contact_phone}
+                    onChange={e => setNewMarketPost({ ...newMarketPost, contact_phone: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Location Name</label>
+                <input
+                  className="sh-input"
+                  placeholder="e.g. Mavoor Road, Calicut"
+                  required
+                  value={newMarketPost.location_name}
+                  onChange={e => setNewMarketPost({ ...newMarketPost, location_name: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Photo Image URL (Optional)</label>
+                <input
+                  className="sh-input"
+                  placeholder="https://images.unsplash.com/..."
+                  value={newMarketPost.image_url}
+                  onChange={e => setNewMarketPost({ ...newMarketPost, image_url: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Description</label>
+                <textarea
+                  className="sh-input"
+                  rows={3}
+                  placeholder="Provide complete details about this item or service requirement..."
+                  value={newMarketPost.description}
+                  onChange={e => setNewMarketPost({ ...newMarketPost, description: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                <button type="submit" className="sh-btn sh-btn-primary">Publish Post</button>
+                <button type="button" className="sh-btn" onClick={() => setShowCreateMarketPost(false)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Market Post Modal */}
+      {editingMarketPost && (
+        <div className="sh-modal-backdrop">
+          <div className="sh-modal" style={{ maxWidth: 500 }}>
+            <h2 className="sh-section-title">Edit Marketplace Posting</h2>
+            <p className="sh-section-sub" style={{ marginBottom: 16 }}>Update posting details, price, location or status</p>
+            <form onSubmit={handleUpdateMarketPost} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Posting Type</label>
+                  <select
+                    className="sh-input"
+                    value={editingMarketPost.type || 'sale'}
+                    onChange={e => setEditingMarketPost({ ...editingMarketPost, type: e.target.value })}
+                  >
+                    <option value="sale">🛍️ For Sale</option>
+                    <option value="requirement">📢 Requirement Needed</option>
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Category</label>
+                  <select
+                    className="sh-input"
+                    value={editingMarketPost.category || 'Local Sales'}
+                    onChange={e => setEditingMarketPost({ ...editingMarketPost, category: e.target.value })}
+                  >
+                    <option value="Local Sales">Local Sales</option>
+                    <option value="Requirements">Requirements</option>
+                    <option value="Used Goods">Used Goods</option>
+                    <option value="Services Needed">Services Needed</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Title</label>
+                <input
+                  className="sh-input"
+                  required
+                  value={editingMarketPost.title || ''}
+                  onChange={e => setEditingMarketPost({ ...editingMarketPost, title: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Price / Budget (₹)</label>
+                  <input
+                    className="sh-input"
+                    type="number"
+                    required
+                    value={editingMarketPost.price || ''}
+                    onChange={e => setEditingMarketPost({ ...editingMarketPost, price: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Contact Phone</label>
+                  <input
+                    className="sh-input"
+                    required
+                    value={editingMarketPost.contactPhone || editingMarketPost.contact_phone || ''}
+                    onChange={e => setEditingMarketPost({ ...editingMarketPost, contact_phone: e.target.value, contactPhone: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Location Name</label>
+                <input
+                  className="sh-input"
+                  required
+                  value={editingMarketPost.locationName || editingMarketPost.location_name || ''}
+                  onChange={e => setEditingMarketPost({ ...editingMarketPost, location_name: e.target.value, locationName: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Photo Image URL</label>
+                <input
+                  className="sh-input"
+                  value={editingMarketPost.imageUrl || editingMarketPost.image_url || ''}
+                  onChange={e => setEditingMarketPost({ ...editingMarketPost, image_url: e.target.value, imageUrl: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Description</label>
+                <textarea
+                  className="sh-input"
+                  rows={3}
+                  value={editingMarketPost.description || ''}
+                  onChange={e => setEditingMarketPost({ ...editingMarketPost, description: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                <button type="submit" className="sh-btn sh-btn-primary">Save Changes</button>
+                <button type="button" className="sh-btn" onClick={() => setEditingMarketPost(null)}>Cancel</button>
               </div>
             </form>
           </div>
