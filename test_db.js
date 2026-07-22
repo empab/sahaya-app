@@ -1,18 +1,20 @@
-import { supabase } from './src/lib/supabase.js';
-
 async function run() {
-  console.log('Testing browser anon client queries to Supabase...');
-  const pRes = await supabase.from('providers').select('*');
-  console.log('Providers count:', pRes.data?.length, 'data:', pRes.data, 'error:', pRes.error);
-
-  const bRes = await supabase.from('bookings').select('*');
-  console.log('Bookings count:', bRes.data?.length, 'error:', bRes.error);
-
-  const sRes = await supabase.from('services').select('*');
-  console.log('Services count:', sRes.data?.length, 'error:', sRes.error);
-
-  const cRes = await supabase.from('customers').select('*');
-  console.log('Customers count:', cRes.data?.length, 'error:', cRes.error);
+  const url = 'https://osjjxyqyifgpwfvlxczc.supabase.co/rest/v1/providers?select=*';
+  const apiKey = 'sb_publishable_OnPppiz2wg609NIiu6ctNQ_xVkpSiCl';
+  
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'apikey': apiKey,
+        'Authorization': `Bearer ${apiKey}`
+      }
+    });
+    const text = await res.text();
+    console.log('HTTP Status:', res.status);
+    console.log('Response body:', text);
+  } catch (err) {
+    console.error('Fetch error:', err);
+  }
 }
 
 run();

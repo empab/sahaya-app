@@ -60,16 +60,12 @@ export default function App() {
         
         if (pRes?.data && Array.isArray(pRes.data) && pRes.data.length > 0) {
           setProviders(pRes.data);
-        } else if (pRes?.data && Array.isArray(pRes.data) && pRes.data.length === 0) {
-          setProviders([]);
         } else {
           setProviders(INITIAL_PROVIDERS);
         }
 
         if (bRes?.data && Array.isArray(bRes.data) && bRes.data.length > 0) {
           setBookings(bRes.data.map(transformBooking));
-        } else if (bRes?.data && Array.isArray(bRes.data) && bRes.data.length === 0) {
-          setBookings([]);
         } else {
           setBookings(INITIAL_BOOKINGS);
         }
@@ -82,8 +78,6 @@ export default function App() {
 
         if (mRes?.data && Array.isArray(mRes.data) && mRes.data.length > 0) {
           setMarketplacePostings(mRes.data);
-        } else if (mRes?.data && Array.isArray(mRes.data) && mRes.data.length === 0) {
-          setMarketplacePostings([]);
         } else {
           setMarketplacePostings(INITIAL_MARKETPLACE_POSTINGS);
         }
@@ -103,8 +97,6 @@ export default function App() {
             };
           });
           setUsers(derivedUsers);
-        } else if (cRes?.data && Array.isArray(cRes.data) && cRes.data.length === 0) {
-          setUsers([]);
         } else {
           setUsers(INITIAL_USERS);
         }

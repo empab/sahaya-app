@@ -651,7 +651,7 @@ export default function AdminApp({
                 </tr>
               </thead>
               <tbody>
-                {providers.filter(p => p.status === 'approved').map(p => {
+                {providers.filter(p => p && (p.status === 'approved' || p.status === 'active' || !p.status || p.status !== 'rejected')).map(p => {
                   const skills = (p.skill || '').split(',').map(s => s.trim());
                   return (
                   <tr key={p.id} style={{ cursor: 'pointer' }} onClick={() => setProviderDetail(p.id)}>
