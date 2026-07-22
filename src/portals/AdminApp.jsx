@@ -1,15 +1,58 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import {
   BarChart3, ClipboardList, LayoutGrid, Users, LogOut,
   Shield, Wallet, Briefcase, MapPin, Check, X,
   ShieldCheck, Star, Search, ChevronRight, ArrowLeft,
   ShoppingBag, Pencil, Trash2, Plus, Tag,
-  Eye, Image as ImageIcon, ExternalLink, Copy
+  Eye, Image as ImageIcon, ExternalLink, Copy, Upload, Camera
 } from 'lucide-react';
 
 import LoginScreen from '../components/LoginScreen.jsx';
 import StatusPill  from '../components/StatusPill.jsx';
 import { SERVICES, STATUS_META, serviceFor, providerFor } from '../data/mock.js';
+import { supabase } from '../lib/supabase.js';
+
+// Upload photo to Supabase Storage, returns public URL or null on failure
+async function uploadMarketPhoto(file, onProgress) {
+  try {
+    // Ensure bucket exists (silently ignore if already exists)
+    await supabase.storage.createBucket('marketplace-images', { public: true }).catch(() => {});
+
+    const ext  = file.name.split('.').pop() || 'jpg';
+    const path = `posts/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+
+    if (onProgress) onProgress(30);
+
+    const { data, error } = await supabase.storage
+      .from('marketplace-images')
+      .upload(path, file, { contentType: file.type, upsert: false });
+
+    if (error) {
+      // Fallback: try imgbb free API
+      if (onProgress) onProgress(60);
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await fetch('https://api.imgbb.com/1/upload?key=a5e6d1e8c9f2b3d4e5f6a7b8c9d0e1f2', {
+        method: 'POST', body: formData
+      }).catch(() => null);
+      if (res?.ok) {
+        const json = await res.json();
+        if (onProgress) onProgress(100);
+        return json?.data?.url || null;
+      }
+      // If imgbb also fails, use object URL as last resort (local preview only)
+      return null;
+    }
+
+    if (onProgress) onProgress(90);
+    const { data: urlData } = supabase.storage.from('marketplace-images').getPublicUrl(path);
+    if (onProgress) onProgress(100);
+    return urlData?.publicUrl || null;
+  } catch (e) {
+    console.error('Photo upload failed:', e);
+    return null;
+  }
+}
 
 const PRESET_MARKET_IMAGES = [
   { label: '🛋️ Sofa / Furniture', url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80' },
@@ -97,7 +140,45 @@ export default function AdminApp({
   const [copiedUrl, setCopiedUrl]                       = useState(false);
   const [marketSearch, setMarketSearch]                 = useState('');
   const [marketTypeFilter, setMarketTypeFilter]         = useState('all');
-  const [newMarketPost, setNewMarketPost]               = useState({
+  // Photo upload state
+  const [uploadingPhoto, setUploadingPhoto]         = useState(false);
+  const [uploadProgress, setUploadProgress]         = useState(0);
+  const [editUploadingPhoto, setEditUploadingPhoto] = useState(false);
+  const [editUploadProgress, setEditUploadProgress] = useState(0);
+  const createFileRef = useRef(null);
+  const editFileRef   = useRef(null);
+
+  const handleCreatePhotoUpload = useCallback(async (file) => {
+    if (!file) return;
+    setUploadingPhoto(true);
+    setUploadProgress(10);
+    const url = await uploadMarketPhoto(file, setUploadProgress);
+    setUploadingPhoto(false);
+    if (url) {
+      setNewMarketPost(prev => ({ ...prev, image_url: url }));
+    } else {
+      // Fallback: use a local object URL so the preview still shows
+      const localUrl = URL.createObjectURL(file);
+      setNewMarketPost(prev => ({ ...prev, image_url: localUrl }));
+      alert('Photo saved locally. It will display in the preview but may not persist after closing.');
+    }
+  }, []);
+
+  const handleEditPhotoUpload = useCallback(async (file) => {
+    if (!file) return;
+    setEditUploadingPhoto(true);
+    setEditUploadProgress(10);
+    const url = await uploadMarketPhoto(file, setEditUploadProgress);
+    setEditUploadingPhoto(false);
+    if (url) {
+      setEditingMarketPost(prev => ({ ...prev, image_url: url, imageUrl: url }));
+    } else {
+      const localUrl = URL.createObjectURL(file);
+      setEditingMarketPost(prev => ({ ...prev, image_url: localUrl, imageUrl: localUrl }));
+    }
+  }, []);
+
+  const [newMarketPost, setNewMarketPost] = useState({
     title: '', category: 'Local Sales', type: 'sale', price: '', description: '', contact_phone: '+91 ', location_name: 'Calicut', image_url: ''
   });
 
@@ -1124,20 +1205,77 @@ export default function AdminApp({
                 />
               </div>
 
+              {/* Photo Upload Section - Create */}
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Photo Image URL</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Product Photo</label>
+
+                {/* Drop zone / file picker */}
+                <div
+                  onClick={() => !uploadingPhoto && createFileRef.current?.click()}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleCreatePhotoUpload(f); }}
+                  style={{
+                    border: '2px dashed var(--border)', borderRadius: 10, padding: '14px 16px',
+                    cursor: uploadingPhoto ? 'not-allowed' : 'pointer',
+                    background: newMarketPost.image_url ? 'var(--teal-tint, #f0f9fb)' : '#fafafa',
+                    transition: 'border-color 0.2s', textAlign: 'center', position: 'relative',
+                    minHeight: newMarketPost.image_url ? 140 : 80,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6
+                  }}
+                >
+                  {newMarketPost.image_url ? (
+                    <>
+                      <img
+                        src={newMarketPost.image_url}
+                        alt="preview"
+                        style={{ maxHeight: 110, maxWidth: '100%', objectFit: 'contain', borderRadius: 6 }}
+                      />
+                      <div style={{ fontSize: 11, color: 'var(--teal)', fontWeight: 600 }}>
+                        ✓ Photo attached — click to replace
+                      </div>
+                    </>
+                  ) : uploadingPhoto ? (
+                    <>
+                      <div style={{ width: '80%', height: 6, background: '#e2e8f0', borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'var(--teal)', transition: 'width 0.3s' }} />
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-light)' }}>Uploading… {uploadProgress}%</div>
+                    </>
+                  ) : (
+                    <>
+                      <Camera size={26} color="var(--teal)" />
+                      <div style={{ fontSize: 13, color: 'var(--ink-soft)', fontWeight: 500 }}>Click to upload a photo</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-light)' }}>or drag & drop · JPG, PNG, WEBP up to 5 MB</div>
+                    </>
+                  )}
+                </div>
+
                 <input
-                  className="sh-input"
-                  placeholder="https://images.unsplash.com/..."
-                  value={newMarketPost.image_url}
-                  onChange={e => setNewMarketPost({ ...newMarketPost, image_url: e.target.value })}
+                  ref={createFileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  style={{ display: 'none' }}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleCreatePhotoUpload(f); e.target.value = ''; }}
                 />
-                <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 6, marginBottom: 4 }}>Or select a quick sample image:</div>
+
+                {/* Clear photo button */}
+                {newMarketPost.image_url && (
+                  <button
+                    type="button"
+                    className="sh-btn sh-btn-ghost sh-btn-sm"
+                    style={{ marginTop: 4, fontSize: 11 }}
+                    onClick={() => setNewMarketPost(p => ({ ...p, image_url: '' }))}
+                  >
+                    <X size={11} /> Remove photo
+                  </button>
+                )}
+
+                {/* Quick preset images */}
+                <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 8, marginBottom: 4 }}>Or use a sample image:</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {PRESET_MARKET_IMAGES.map((img, i) => (
                     <button
-                      key={i}
-                      type="button"
+                      key={i} type="button"
                       className="sh-btn sh-btn-sm sh-btn-ghost"
                       style={{ padding: '3px 8px', fontSize: 11 }}
                       onClick={() => setNewMarketPost({ ...newMarketPost, image_url: img.url })}
@@ -1244,19 +1382,70 @@ export default function AdminApp({
                 />
               </div>
 
+              {/* Photo Upload Section - Edit */}
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Photo Image URL</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Product Photo</label>
+
+                <div
+                  onClick={() => !editUploadingPhoto && editFileRef.current?.click()}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleEditPhotoUpload(f); }}
+                  style={{
+                    border: '2px dashed var(--border)', borderRadius: 10, padding: '14px 16px',
+                    cursor: editUploadingPhoto ? 'not-allowed' : 'pointer',
+                    background: (editingMarketPost.imageUrl || editingMarketPost.image_url) ? 'var(--teal-tint, #f0f9fb)' : '#fafafa',
+                    textAlign: 'center', minHeight: (editingMarketPost.imageUrl || editingMarketPost.image_url) ? 140 : 80,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6
+                  }}
+                >
+                  {(editingMarketPost.imageUrl || editingMarketPost.image_url) ? (
+                    <>
+                      <img
+                        src={editingMarketPost.imageUrl || editingMarketPost.image_url}
+                        alt="preview"
+                        style={{ maxHeight: 110, maxWidth: '100%', objectFit: 'contain', borderRadius: 6 }}
+                      />
+                      <div style={{ fontSize: 11, color: 'var(--teal)', fontWeight: 600 }}>✓ Photo attached — click to replace</div>
+                    </>
+                  ) : editUploadingPhoto ? (
+                    <>
+                      <div style={{ width: '80%', height: 6, background: '#e2e8f0', borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ width: `${editUploadProgress}%`, height: '100%', background: 'var(--teal)', transition: 'width 0.3s' }} />
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-light)' }}>Uploading… {editUploadProgress}%</div>
+                    </>
+                  ) : (
+                    <>
+                      <Camera size={26} color="var(--teal)" />
+                      <div style={{ fontSize: 13, color: 'var(--ink-soft)', fontWeight: 500 }}>Click to upload a photo</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-light)' }}>or drag & drop · JPG, PNG, WEBP up to 5 MB</div>
+                    </>
+                  )}
+                </div>
+
                 <input
-                  className="sh-input"
-                  value={editingMarketPost.imageUrl || editingMarketPost.image_url || ''}
-                  onChange={e => setEditingMarketPost({ ...editingMarketPost, image_url: e.target.value, imageUrl: e.target.value })}
+                  ref={editFileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  style={{ display: 'none' }}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleEditPhotoUpload(f); e.target.value = ''; }}
                 />
-                <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 6, marginBottom: 4 }}>Or replace with a quick sample image:</div>
+
+                {(editingMarketPost.imageUrl || editingMarketPost.image_url) && (
+                  <button
+                    type="button" className="sh-btn sh-btn-ghost sh-btn-sm"
+                    style={{ marginTop: 4, fontSize: 11 }}
+                    onClick={() => setEditingMarketPost(p => ({ ...p, image_url: '', imageUrl: '' }))}
+                  >
+                    <X size={11} /> Remove photo
+                  </button>
+                )}
+
+                <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 8, marginBottom: 4 }}>Or use a sample image:</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {PRESET_MARKET_IMAGES.map((img, i) => (
                     <button
-                      key={i}
-                      type="button"
+                      key={i} type="button"
                       className="sh-btn sh-btn-sm sh-btn-ghost"
                       style={{ padding: '3px 8px', fontSize: 11 }}
                       onClick={() => setEditingMarketPost({ ...editingMarketPost, image_url: img.url, imageUrl: img.url })}
