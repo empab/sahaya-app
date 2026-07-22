@@ -30,11 +30,12 @@ function transformBooking(b) {
 
 export default function App() {
   const [portal,    setPortal]    = useState('landing');
-  const [providers, setProviders] = useState(INITIAL_PROVIDERS);
-  const [bookings,  setBookings]  = useState(INITIAL_BOOKINGS);
-  const [services,  setServices]  = useState(SERVICES);
+  const [providers, setProviders] = useState([]);
+  const [bookings,  setBookings]  = useState([]);
+  const [services,  setServices]  = useState([]);
   const [session,   setSession]   = useState(null);
-  const [users,     setUsers]     = useState(INITIAL_USERS);
+  const [users,     setUsers]     = useState([]);
+  const [marketplacePostings, setMarketplacePostings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export default function App() {
       const savedPortal = localStorage.getItem('sh_portal');
 
       try {
-        // Run session check and data fetch simultaneously with fallbacks
+        // Run session check and data fetch simultaneously from real Supabase DB
         const [sessionRes, pRes, bRes, sRes, cRes, mRes] = await Promise.all([
           supabase.auth.getSession().catch(() => ({ data: { session: null } })),
           supabase.from('providers').select('*').catch(() => ({ error: true, data: [] })),
@@ -56,13 +57,13 @@ export default function App() {
         if (sessionRes?.data?.session) {
           setSession(sessionRes.data.session);
         }
-        if (pRes?.data && !pRes.error && pRes.data.length > 0) setProviders(pRes.data);
-        if (bRes?.data && !bRes.error && bRes.data.length > 0) setBookings(bRes.data.map(transformBooking));
-        if (sRes?.data && !sRes.error && sRes.data.length > 0) setServices(sRes.data);
-        if (mRes?.data && !mRes.error && mRes.data.length > 0) setMarketplacePostings(mRes.data);
-        if (cRes?.data && !cRes.error && cRes.data.length > 0) {
+        if (pRes?.data && !pRes.error) setProviders(pRes.data);
+        if (bRes?.data && !bRes.error) setBookings(bRes.data.map(transformBooking));
+        if (sRes?.data && !sRes.error) setServices(sRes.data);
+        if (mRes?.data && !mRes.error) setMarketplacePostings(mRes.data);
+        if (cRes?.data && !cRes.error) {
           const derivedUsers = cRes.data.map(c => {
-            const userBookings = (bRes?.data && Array.isArray(bRes.data)) ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone) : [];
+            const userBookings = (bRes?.data && Array.isArray(bRes.data)) ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone || b.customer_name === c.name) : [];
             return {
               id: c.id,
               name: c.name || '-',
@@ -127,13 +128,13 @@ export default function App() {
       supabase.from('customers').select('*').order('created_at', { ascending: false }),
       supabase.from('marketplace_postings').select('*').order('created_at', { ascending: false }),
     ]);
-    if (mRes?.data && !mRes.error && mRes.data.length > 0) setMarketplacePostings(mRes.data);
-    if (pRes?.data && !pRes.error && pRes.data.length > 0) setProviders(pRes.data);
-    if (bRes?.data && !bRes.error && bRes.data.length > 0) setBookings(bRes.data.map(transformBooking));
-    if (sRes?.data && !sRes.error && sRes.data.length > 0) setServices(sRes.data);
-    if (cRes?.data && !cRes.error && cRes.data.length > 0) {
+    if (mRes?.data && !mRes.error) setMarketplacePostings(mRes.data);
+    if (pRes?.data && !pRes.error) setProviders(pRes.data);
+    if (bRes?.data && !bRes.error) setBookings(bRes.data.map(transformBooking));
+    if (sRes?.data && !sRes.error) setServices(sRes.data);
+    if (cRes?.data && !cRes.error) {
       const derivedUsers = cRes.data.map(c => {
-        const userBookings = bRes.data ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone) : [];
+        const userBookings = bRes.data ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone || b.customer_name === c.name) : [];
         return {
           id: c.id,
           name: c.name || '-',
@@ -258,8 +259,6 @@ export default function App() {
     }
     setServices(prev => prev.map(s => (s.id === id ? { ...s, ...patch } : s)));
   }
-
-  const [marketplacePostings, setMarketplacePostings] = useState(INITIAL_MARKETPLACE_POSTINGS);
 
   async function addMarketplacePosting(posting) {
     try {
