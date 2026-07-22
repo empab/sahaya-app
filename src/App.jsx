@@ -57,11 +57,32 @@ export default function App() {
         if (sessionRes?.data?.session) {
           setSession(sessionRes.data.session);
         }
-        if (pRes?.data && !pRes.error) setProviders(pRes.data);
-        if (bRes?.data && !bRes.error) setBookings(bRes.data.map(transformBooking));
-        if (sRes?.data && !sRes.error) setServices(sRes.data);
-        if (mRes?.data && !mRes.error) setMarketplacePostings(mRes.data);
-        if (cRes?.data && !cRes.error) {
+        
+        if (pRes?.data && !pRes.error && pRes.data.length > 0) {
+          setProviders(pRes.data);
+        } else {
+          setProviders(INITIAL_PROVIDERS);
+        }
+
+        if (bRes?.data && !bRes.error && bRes.data.length > 0) {
+          setBookings(bRes.data.map(transformBooking));
+        } else {
+          setBookings(INITIAL_BOOKINGS);
+        }
+
+        if (sRes?.data && !sRes.error && sRes.data.length > 0) {
+          setServices(sRes.data);
+        } else {
+          setServices(SERVICES);
+        }
+
+        if (mRes?.data && !mRes.error && mRes.data.length > 0) {
+          setMarketplacePostings(mRes.data);
+        } else {
+          setMarketplacePostings(INITIAL_MARKETPLACE_POSTINGS);
+        }
+
+        if (cRes?.data && !cRes.error && cRes.data.length > 0) {
           const derivedUsers = cRes.data.map(c => {
             const userBookings = (bRes?.data && Array.isArray(bRes.data)) ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone || b.customer_name === c.name) : [];
             return {
@@ -76,6 +97,8 @@ export default function App() {
             };
           });
           setUsers(derivedUsers);
+        } else {
+          setUsers(INITIAL_USERS);
         }
 
         if (savedPortal && savedPortal !== 'landing') {
@@ -83,6 +106,11 @@ export default function App() {
         }
       } catch (err) {
         console.error('App init error:', err);
+        setProviders(INITIAL_PROVIDERS);
+        setBookings(INITIAL_BOOKINGS);
+        setServices(SERVICES);
+        setUsers(INITIAL_USERS);
+        setMarketplacePostings(INITIAL_MARKETPLACE_POSTINGS);
       } finally {
         setIsLoading(false);
       }
@@ -121,32 +149,37 @@ export default function App() {
   }, []);
 
   async function fetchData() {
-    const [pRes, bRes, sRes, cRes, mRes] = await Promise.all([
-      supabase.from('providers').select('*'),
-      supabase.from('bookings').select('*').order('created_at', { ascending: false }),
-      supabase.from('services').select('*').order('id', { ascending: true }),
-      supabase.from('customers').select('*').order('created_at', { ascending: false }),
-      supabase.from('marketplace_postings').select('*').order('created_at', { ascending: false }),
-    ]);
-    if (mRes?.data && !mRes.error) setMarketplacePostings(mRes.data);
-    if (pRes?.data && !pRes.error) setProviders(pRes.data);
-    if (bRes?.data && !bRes.error) setBookings(bRes.data.map(transformBooking));
-    if (sRes?.data && !sRes.error) setServices(sRes.data);
-    if (cRes?.data && !cRes.error) {
-      const derivedUsers = cRes.data.map(c => {
-        const userBookings = bRes.data ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone || b.customer_name === c.name) : [];
-        return {
-          id: c.id,
-          name: c.name || '-',
-          email: c.email || '-',
-          phone: c.phone || '-',
-          password: '*****',
-          joined: c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
-          lastLogin: 'Active',
-          bookingsCount: userBookings.length,
-        };
-      });
-      setUsers(derivedUsers);
+    try {
+      const [pRes, bRes, sRes, cRes, mRes] = await Promise.all([
+        supabase.from('providers').select('*').catch(() => ({ error: true, data: [] })),
+        supabase.from('bookings').select('*').order('created_at', { ascending: false }).catch(() => ({ error: true, data: [] })),
+        supabase.from('services').select('*').order('id', { ascending: true }).catch(() => ({ error: true, data: [] })),
+        supabase.from('customers').select('*').order('created_at', { ascending: false }).catch(() => ({ error: true, data: [] })),
+        supabase.from('marketplace_postings').select('*').order('created_at', { ascending: false }).catch(() => ({ error: true, data: [] })),
+      ]);
+
+      if (mRes?.data && !mRes.error && mRes.data.length > 0) setMarketplacePostings(mRes.data);
+      if (pRes?.data && !pRes.error && pRes.data.length > 0) setProviders(pRes.data);
+      if (bRes?.data && !bRes.error && bRes.data.length > 0) setBookings(bRes.data.map(transformBooking));
+      if (sRes?.data && !sRes.error && sRes.data.length > 0) setServices(sRes.data);
+      if (cRes?.data && !cRes.error && cRes.data.length > 0) {
+        const derivedUsers = cRes.data.map(c => {
+          const userBookings = bRes.data ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone || b.customer_name === c.name) : [];
+          return {
+            id: c.id,
+            name: c.name || '-',
+            email: c.email || '-',
+            phone: c.phone || '-',
+            password: '*****',
+            joined: c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+            lastLogin: 'Active',
+            bookingsCount: userBookings.length,
+          };
+        });
+        setUsers(derivedUsers);
+      }
+    } catch (err) {
+      console.log('fetchData background refresh fallback', err);
     }
   }
 
