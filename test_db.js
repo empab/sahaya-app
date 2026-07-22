@@ -1,23 +1,18 @@
 import { supabase } from './src/lib/supabase.js';
 
 async function run() {
-  const [pRes, bRes, sRes, cRes] = await Promise.all([
-    supabase.from('providers').select('*'),
-    supabase.from('bookings').select('*').order('created_at', { ascending: false }).limit(10),
-    supabase.from('services').select('*').order('id', { ascending: true }),
-    supabase.from('customers').select('*'),
-  ]);
-  console.log('--- SERVICES ---', sRes.data?.length);
-  console.log(sRes.data?.map(s => `[${s.id}] ${s.name} (₹${s.price})`));
+  console.log('Testing browser anon client queries to Supabase...');
+  const pRes = await supabase.from('providers').select('*');
+  console.log('Providers count:', pRes.data?.length, 'data:', pRes.data, 'error:', pRes.error);
 
-  console.log('\n--- PROVIDERS ---', pRes.data?.length);
-  console.log(pRes.data?.map(p => `[${p.id}] ${p.name} - ${p.skill} (${p.status})`));
+  const bRes = await supabase.from('bookings').select('*');
+  console.log('Bookings count:', bRes.data?.length, 'error:', bRes.error);
 
-  console.log('\n--- CUSTOMERS ---', cRes.data?.length);
-  console.log(cRes.data?.map(c => `[${c.id}] ${c.name} (${c.phone})`));
+  const sRes = await supabase.from('services').select('*');
+  console.log('Services count:', sRes.data?.length, 'error:', sRes.error);
 
-  console.log('\n--- RECENT BOOKINGS ---', bRes.data?.length);
-  console.log(bRes.data?.map(b => `[${b.id}] ${b.service_name} by ${b.customer_name} (${b.status})`));
+  const cRes = await supabase.from('customers').select('*');
+  console.log('Customers count:', cRes.data?.length, 'error:', cRes.error);
 }
 
 run();
