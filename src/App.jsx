@@ -107,6 +107,7 @@ export default function App() {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'providers' }, fetchData)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, fetchData)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, fetchData)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'marketplace_postings' }, fetchData)
         .subscribe();
     } catch (e) {
       console.log('Realtime subscription fallback', e);
@@ -119,12 +120,14 @@ export default function App() {
   }, []);
 
   async function fetchData() {
-    const [pRes, bRes, sRes, cRes] = await Promise.all([
+    const [pRes, bRes, sRes, cRes, mRes] = await Promise.all([
       supabase.from('providers').select('*'),
       supabase.from('bookings').select('*').order('created_at', { ascending: false }),
       supabase.from('services').select('*').order('id', { ascending: true }),
       supabase.from('customers').select('*').order('created_at', { ascending: false }),
+      supabase.from('marketplace_postings').select('*').order('created_at', { ascending: false }),
     ]);
+    if (mRes?.data && !mRes.error) setMarketplacePostings(mRes.data);
     if (!pRes.error) setProviders(pRes.data);
     if (!bRes.error) setBookings(bRes.data.map(transformBooking));
     if (!sRes.error) setServices(sRes.data);
