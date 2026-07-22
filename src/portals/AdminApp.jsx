@@ -67,7 +67,7 @@ const SIDEBAR_ITEMS = [
 
 
 export default function AdminApp({
-  providers, bookings, users, services, updateBooking, updateProvider, addProvider, addService, updateService,
+  providers = [], bookings = [], users = [], services = [], updateBooking, updateProvider, addProvider, addService, updateService,
   marketplacePostings = [], addMarketplacePosting, updateMarketplacePosting, deleteMarketplacePosting, onExit
 }) {
   const [authed,         setAuthed]         = useState(() => localStorage.getItem('sh_admin_auth') === 'true');
@@ -823,7 +823,7 @@ export default function AdminApp({
                 </tr>
               </thead>
               <tbody>
-                {marketplacePostings
+                {(marketplacePostings || [])
                   .filter(p => {
                     const matchesSearch = (p.title || '').toLowerCase().includes(marketSearch.toLowerCase()) ||
                       (p.description || '').toLowerCase().includes(marketSearch.toLowerCase()) ||

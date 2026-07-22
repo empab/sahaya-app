@@ -89,26 +89,32 @@ export default function App() {
 
     init();
 
-    // Listen for auth state changes after initial load
-    const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((event, session) => {
+    // Listen for auth state changes after initial load safely
+    const authRes = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (event === 'SIGNED_OUT') {
         setPortal('landing');
         localStorage.removeItem('sh_portal');
       }
     });
+    const authSub = authRes?.data?.subscription;
 
-    // Real-time DB updates
-    const dbSub = supabase.channel('schema-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, fetchData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'providers' }, fetchData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, fetchData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, fetchData)
-      .subscribe();
+    // Real-time DB updates safely wrapped
+    let dbSub;
+    try {
+      dbSub = supabase.channel('schema-db-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, fetchData)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'providers' }, fetchData)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, fetchData)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, fetchData)
+        .subscribe();
+    } catch (e) {
+      console.log('Realtime subscription fallback', e);
+    }
 
     return () => {
-      authSub.unsubscribe();
-      supabase.removeChannel(dbSub);
+      if (authSub?.unsubscribe) authSub.unsubscribe();
+      if (dbSub) supabase.removeChannel(dbSub);
     };
   }, []);
 
