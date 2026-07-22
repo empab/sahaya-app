@@ -58,31 +58,37 @@ export default function App() {
           setSession(sessionRes.data.session);
         }
         
-        if (pRes?.data && !pRes.error && pRes.data.length > 0) {
+        if (pRes?.data && Array.isArray(pRes.data) && pRes.data.length > 0) {
           setProviders(pRes.data);
+        } else if (pRes?.data && Array.isArray(pRes.data) && pRes.data.length === 0) {
+          setProviders([]);
         } else {
           setProviders(INITIAL_PROVIDERS);
         }
 
-        if (bRes?.data && !bRes.error && bRes.data.length > 0) {
+        if (bRes?.data && Array.isArray(bRes.data) && bRes.data.length > 0) {
           setBookings(bRes.data.map(transformBooking));
+        } else if (bRes?.data && Array.isArray(bRes.data) && bRes.data.length === 0) {
+          setBookings([]);
         } else {
           setBookings(INITIAL_BOOKINGS);
         }
 
-        if (sRes?.data && !sRes.error && sRes.data.length > 0) {
+        if (sRes?.data && Array.isArray(sRes.data) && sRes.data.length > 0) {
           setServices(sRes.data);
         } else {
           setServices(SERVICES);
         }
 
-        if (mRes?.data && !mRes.error && mRes.data.length > 0) {
+        if (mRes?.data && Array.isArray(mRes.data) && mRes.data.length > 0) {
           setMarketplacePostings(mRes.data);
+        } else if (mRes?.data && Array.isArray(mRes.data) && mRes.data.length === 0) {
+          setMarketplacePostings([]);
         } else {
           setMarketplacePostings(INITIAL_MARKETPLACE_POSTINGS);
         }
 
-        if (cRes?.data && !cRes.error && cRes.data.length > 0) {
+        if (cRes?.data && Array.isArray(cRes.data) && cRes.data.length > 0) {
           const derivedUsers = cRes.data.map(c => {
             const userBookings = (bRes?.data && Array.isArray(bRes.data)) ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone || b.customer_name === c.name) : [];
             return {
@@ -97,6 +103,8 @@ export default function App() {
             };
           });
           setUsers(derivedUsers);
+        } else if (cRes?.data && Array.isArray(cRes.data) && cRes.data.length === 0) {
+          setUsers([]);
         } else {
           setUsers(INITIAL_USERS);
         }
@@ -106,11 +114,6 @@ export default function App() {
         }
       } catch (err) {
         console.error('App init error:', err);
-        setProviders(INITIAL_PROVIDERS);
-        setBookings(INITIAL_BOOKINGS);
-        setServices(SERVICES);
-        setUsers(INITIAL_USERS);
-        setMarketplacePostings(INITIAL_MARKETPLACE_POSTINGS);
       } finally {
         setIsLoading(false);
       }
@@ -122,8 +125,11 @@ export default function App() {
     const authRes = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (event === 'SIGNED_OUT') {
-        setPortal('landing');
-        localStorage.removeItem('sh_portal');
+        const curPortal = localStorage.getItem('sh_portal');
+        if (curPortal === 'user' || curPortal === 'provider') {
+          setPortal('landing');
+          localStorage.removeItem('sh_portal');
+        }
       }
     });
     const authSub = authRes?.data?.subscription;
