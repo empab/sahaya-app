@@ -147,19 +147,19 @@ export default function AdminApp({
   }
 
   /* ---- All derived values & hooks must come BEFORE any early returns ---- */
-  const revenue          = bookings.filter(b => b.status === 'completed').reduce((s, b) => s + b.price, 0);
-  const pendingCount     = bookings.filter(b => b.status === 'pending').length;
-  const activeProviders  = providers.filter(p => p.status === 'approved').length;
-  const pendingProviders = providers.filter(p => p.status === 'pending');
+  const revenue          = (bookings || []).filter(b => b && b.status === 'completed').reduce((s, b) => s + (b.price || 0), 0);
+  const pendingCount     = (bookings || []).filter(b => b && b.status === 'pending').length;
+  const activeProviders  = (providers || []).filter(p => p && p.status === 'approved').length;
+  const pendingProviders = (providers || []).filter(p => p && p.status === 'pending');
 
   const filteredBookings = useMemo(() => {
-    let list = bookingFilter === 'all' ? bookings : bookings.filter(b => b.status === bookingFilter);
+    let list = bookingFilter === 'all' ? (bookings || []) : (bookings || []).filter(b => b && b.status === bookingFilter);
     if (bookingSearch.trim()) {
       const q = bookingSearch.toLowerCase();
       list = list.filter(b =>
-        b.serviceName.toLowerCase().includes(q) ||
-        b.customerName.toLowerCase().includes(q) ||
-        String(b.id).includes(q)
+        (b?.serviceName || '').toLowerCase().includes(q) ||
+        (b?.customerName || '').toLowerCase().includes(q) ||
+        String(b?.id || '').includes(q)
       );
     }
     return list;
@@ -647,7 +647,7 @@ export default function AdminApp({
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <div className="sh-avatar" style={{ width: 26, height: 26, fontSize: 10 }}>
-                          {p.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                          {(p?.name || 'P').split(' ').map(n => n ? n[0] : '').filter(Boolean).slice(0, 2).join('') || 'P'}
                         </div>
                         {p.name}
                       </div>
@@ -755,7 +755,7 @@ export default function AdminApp({
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <div className="sh-avatar" style={{ width: 26, height: 26, fontSize: 10 }}>
-                          {u.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                          {(u?.name || 'U').split(' ').map(n => n ? n[0] : '').filter(Boolean).slice(0, 2).join('') || 'U'}
                         </div>
                         {u.name}
                       </div>
