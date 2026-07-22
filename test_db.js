@@ -1,19 +1,13 @@
 async function run() {
-  const url = 'https://osjjxyqyifgpwfvlxczc.supabase.co/rest/v1/providers?select=*';
-  const apiKey = 'sb_publishable_OnPppiz2wg609NIiu6ctNQ_xVkpSiCl';
-  
-  try {
-    const res = await fetch(url, {
-      headers: {
-        'apikey': apiKey,
-        'Authorization': `Bearer ${apiKey}`
-      }
-    });
-    const text = await res.text();
-    console.log('HTTP Status:', res.status);
-    console.log('Response body:', text);
-  } catch (err) {
-    console.error('Fetch error:', err);
+  const BASE = 'https://osjjxyqyifgpwfvlxczc.supabase.co/rest/v1';
+  const KEY  = 'sb_publishable_OnPppiz2wg609NIiu6ctNQ_xVkpSiCl';
+  const h    = { headers: { apikey: KEY, Authorization: `Bearer ${KEY}` } };
+
+  const tables = ['providers', 'bookings', 'services', 'customers', 'marketplace_postings'];
+  for (const t of tables) {
+    const r = await fetch(`${BASE}/${t}?select=*`, h);
+    const d = await r.json();
+    console.log(`${t}: HTTP ${r.status} | count=${Array.isArray(d) ? d.length : 'err'} | ${Array.isArray(d) ? '' : JSON.stringify(d)}`);
   }
 }
 

@@ -29,7 +29,11 @@ function transformBooking(b) {
 }
 
 export default function App() {
-  const [portal,    setPortal]    = useState('landing');
+  // Read portal synchronously so reloads never lose the current portal
+  const [portal,    setPortal]    = useState(() => {
+    const saved = localStorage.getItem('sh_portal');
+    return (saved && saved !== 'landing') ? saved : 'landing';
+  });
   const [providers, setProviders] = useState([]);
   const [bookings,  setBookings]  = useState([]);
   const [services,  setServices]  = useState([]);
@@ -101,9 +105,7 @@ export default function App() {
           setUsers(INITIAL_USERS);
         }
 
-        if (savedPortal && savedPortal !== 'landing') {
-          setPortal(savedPortal);
-        }
+        // Portal already restored synchronously from localStorage — no need to setPortal again here
       } catch (err) {
         console.error('App init error:', err);
       } finally {
@@ -341,7 +343,21 @@ export default function App() {
     marketplacePostings, addMarketplacePosting, updateMarketplacePosting, deleteMarketplacePosting
   };
 
-  if (isLoading) return <div style={{padding: 40}}>Loading App Data...</div>;
+  if (isLoading) return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      background: 'var(--bg, #f8fafc)', gap: 14
+    }}>
+      <div style={{
+        width: 44, height: 44, border: '3px solid #e2e8f0',
+        borderTop: '3px solid var(--teal, #006688)',
+        borderRadius: '50%', animation: 'spin 0.8s linear infinite'
+      }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <p style={{ color: '#64748b', fontSize: 14, fontWeight: 500, margin: 0 }}>Loading Sahaya…</p>
+    </div>
+  );
 
   function goPortal(name) {
     setPortal(name);
