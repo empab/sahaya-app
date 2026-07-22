@@ -3,7 +3,7 @@ import Landing     from './portals/Landing.jsx';
 import UserApp     from './portals/UserApp.jsx';
 import ProviderApp from './portals/ProviderApp.jsx';
 import AdminApp    from './portals/AdminApp.jsx';
-import { INITIAL_USERS, INITIAL_MARKETPLACE_POSTINGS } from './data/mock.js';
+import { INITIAL_USERS, INITIAL_MARKETPLACE_POSTINGS, SERVICES, INITIAL_PROVIDERS, INITIAL_BOOKINGS } from './data/mock.js';
 import { supabase } from './lib/supabase.js';
 
 // Helper to convert DB snake_case to app camelCase
@@ -30,11 +30,11 @@ function transformBooking(b) {
 
 export default function App() {
   const [portal,    setPortal]    = useState('landing');
-  const [providers, setProviders] = useState([]);
-  const [bookings,  setBookings]  = useState([]);
-  const [services,  setServices]  = useState([]);
+  const [providers, setProviders] = useState(INITIAL_PROVIDERS);
+  const [bookings,  setBookings]  = useState(INITIAL_BOOKINGS);
+  const [services,  setServices]  = useState(SERVICES);
   const [session,   setSession]   = useState(null);
-  const [users,     setUsers]     = useState([]);
+  const [users,     setUsers]     = useState(INITIAL_USERS);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -56,11 +56,11 @@ export default function App() {
         if (sessionRes?.data?.session) {
           setSession(sessionRes.data.session);
         }
-        if (pRes?.data && !pRes.error) setProviders(pRes.data);
-        if (bRes?.data && !bRes.error) setBookings(bRes.data.map(transformBooking));
-        if (sRes?.data && !sRes.error) setServices(sRes.data);
+        if (pRes?.data && !pRes.error && pRes.data.length > 0) setProviders(pRes.data);
+        if (bRes?.data && !bRes.error && bRes.data.length > 0) setBookings(bRes.data.map(transformBooking));
+        if (sRes?.data && !sRes.error && sRes.data.length > 0) setServices(sRes.data);
         if (mRes?.data && !mRes.error && mRes.data.length > 0) setMarketplacePostings(mRes.data);
-        if (cRes?.data && !cRes.error) {
+        if (cRes?.data && !cRes.error && cRes.data.length > 0) {
           const derivedUsers = cRes.data.map(c => {
             const userBookings = (bRes?.data && Array.isArray(bRes.data)) ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone) : [];
             return {
@@ -127,11 +127,11 @@ export default function App() {
       supabase.from('customers').select('*').order('created_at', { ascending: false }),
       supabase.from('marketplace_postings').select('*').order('created_at', { ascending: false }),
     ]);
-    if (mRes?.data && !mRes.error) setMarketplacePostings(mRes.data);
-    if (!pRes.error) setProviders(pRes.data);
-    if (!bRes.error) setBookings(bRes.data.map(transformBooking));
-    if (!sRes.error) setServices(sRes.data);
-    if (!cRes.error) {
+    if (mRes?.data && !mRes.error && mRes.data.length > 0) setMarketplacePostings(mRes.data);
+    if (pRes?.data && !pRes.error && pRes.data.length > 0) setProviders(pRes.data);
+    if (bRes?.data && !bRes.error && bRes.data.length > 0) setBookings(bRes.data.map(transformBooking));
+    if (sRes?.data && !sRes.error && sRes.data.length > 0) setServices(sRes.data);
+    if (cRes?.data && !cRes.error && cRes.data.length > 0) {
       const derivedUsers = cRes.data.map(c => {
         const userBookings = bRes.data ? bRes.data.filter(b => b.customer_name === c.email || b.phone === c.phone) : [];
         return {

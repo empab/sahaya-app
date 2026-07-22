@@ -23,11 +23,21 @@ export const SERVICES = [
   { id: 17, name: 'Wood Cutting',    icon: Scissors,      bookings: '5k+',  price: 549, skill: 'Wood Cutting',     desc: 'Tree trimming, log cutting, and heavy timber clearing.' },
 ];
 
-export const INITIAL_PROVIDERS = [];
+export const INITIAL_PROVIDERS = [
+  { id: 'p1', name: 'Ramesh Kumar', skill: 'House Help', phone: '+91 98765 11111', address: 'Mavoor Road, Calicut', email: 'ramesh@sahaya.in', aadhaar_number: '5544 3322 1100', price: 350, charge: 1500, rating: 4.8, jobs: 34, status: 'approved', is_available: true },
+  { id: 'p2', name: 'Sujith V', skill: 'Appliance Repair', phone: '+91 98765 22222', address: 'Kondotty, Malappuram', email: 'sujith@sahaya.in', aadhaar_number: '6677 8899 0011', price: 499, charge: 2400, rating: 4.9, jobs: 48, status: 'approved', is_available: true },
+  { id: 'p3', name: 'Muhammed Ali', skill: 'Electrical', phone: '+91 98765 33333', address: 'Pattambi, Palakkad', email: 'ali@sahaya.in', aadhaar_number: '1122 3344 5566', price: 299, charge: 1800, rating: 4.7, jobs: 29, status: 'approved', is_available: true },
+];
 
-export const INITIAL_USERS = [];
+export const INITIAL_USERS = [
+  { id: 'u1', name: 'Ananya Sharma', phone: '+91 98950 12345', email: 'ananya@gmail.com', joined: '12 Jan 2026', lastLogin: 'Active', bookingsCount: 4 },
+  { id: 'u2', name: 'Rahul Varma', phone: '+91 98950 67890', email: 'rahul.v@gmail.com', joined: '04 Feb 2026', lastLogin: 'Active', bookingsCount: 2 },
+];
 
-export const INITIAL_BOOKINGS = [];
+export const INITIAL_BOOKINGS = [
+  { id: 'b101', serviceId: 1, serviceName: 'House Help', customerName: 'Ananya Sharma', phone: '+91 98950 12345', address: 'Civil Station, Calicut', date: '2026-07-22', time: '10:00 AM', price: 349, status: 'completed', providerId: 'p1', createdAt: new Date().toISOString() },
+  { id: 'b102', serviceId: 4, serviceName: 'Air Conditioner', customerName: 'Rahul Varma', phone: '+91 98950 67890', address: 'Mavoor Road, Calicut', date: '2026-07-22', time: '02:00 PM', price: 599, status: 'pending', providerId: null, createdAt: new Date().toISOString() },
+];
 
 export const INITIAL_MARKETPLACE_POSTINGS = [
   {
