@@ -239,13 +239,15 @@ export default function AdminApp({
     e.preventDefault();
     addService({
       name: newService.name,
+      category: newService.category || 'Quick Repairs & Fixes',
+      subCategory: newService.subCategory || newService.skill || 'Electrical',
       price: parseInt(newService.price) || 0,
-      skill: newService.skill,
-      desc: '',
-      icon: 'home_repair_service'
+      skill: newService.skill || newService.subCategory || 'Electrical',
+      desc: newService.desc || '',
+      icon: newService.icon || 'electric_bolt'
     });
     setShowCreateService(false);
-    setNewService({ name: '', price: '', skill: '' });
+    setNewService({ name: '', price: '', skill: '', category: 'Quick Repairs & Fixes', subCategory: 'Electrical', desc: '', icon: 'electric_bolt' });
   }
 
   function handleUpdateService(e) {
@@ -253,8 +255,11 @@ export default function AdminApp({
     if (!editingService) return;
     updateService(editingService.id, {
       name: editingService.name,
+      category: editingService.category || 'Quick Repairs & Fixes',
+      subCategory: editingService.subCategory || editingService.skill || 'Electrical',
       price: parseInt(editingService.price) || 0,
-      skill: editingService.skill
+      skill: editingService.skill || editingService.subCategory || 'Electrical',
+      desc: editingService.desc || ''
     });
     setEditingService(null);
   }
@@ -1195,15 +1200,45 @@ export default function AdminApp({
 
       {showCreateService && (
         <div className="sh-modal-backdrop">
-          <div className="sh-modal">
+          <div className="sh-modal" style={{ maxWidth: 460 }}>
             <h2 className="sh-section-title">Create New Service</h2>
-            <form onSubmit={handleCreateService} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20 }}>
-              <input className="sh-input" placeholder="Service Name (e.g. Sofa Cleaning)" required value={newService.name} onChange={e => setNewService({...newService, name: e.target.value})} />
-              <input className="sh-input" placeholder="Price (₹)" type="number" required value={newService.price} onChange={e => setNewService({...newService, price: e.target.value})} />
-              <input className="sh-input" placeholder="Category Skill (e.g. Cleaning)" required value={newService.skill} onChange={e => setNewService({...newService, skill: e.target.value})} />
-              <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+            <p className="sh-section-sub">Add a service to one of the 10 main Tier-1 categories</p>
+            <form onSubmit={handleCreateService} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Tier-1 Category</label>
+                <select
+                  className="sh-input"
+                  value={newService.category || 'Quick Repairs & Fixes'}
+                  onChange={e => setNewService({ ...newService, category: e.target.value })}
+                >
+                  {CATEGORIES_TIER1.map(cat => (
+                    <option key={cat.id} value={cat.name}>{cat.emoji} {cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Service Name</label>
+                  <input className="sh-input" placeholder="e.g. Fan Fitting & Repair" required value={newService.name} onChange={e => setNewService({...newService, name: e.target.value})} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Price (₹)</label>
+                  <input className="sh-input" placeholder="e.g. 299" type="number" required value={newService.price} onChange={e => setNewService({...newService, price: e.target.value})} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Subcategory / Skill</label>
+                  <input className="sh-input" placeholder="e.g. Electrical" required value={newService.skill} onChange={e => setNewService({...newService, skill: e.target.value, subCategory: e.target.value})} />
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Description</label>
+                <textarea className="sh-input" style={{ minHeight: 60, resize: 'vertical' }} placeholder="Short service description..." value={newService.desc || ''} onChange={e => setNewService({...newService, desc: e.target.value})} />
+              </div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 10, justifyContent: 'flex-end' }}>
+                <button type="button" className="sh-btn sh-btn-ghost" onClick={() => setShowCreateService(false)}>Cancel</button>
                 <button type="submit" className="sh-btn sh-btn-primary">Add Service</button>
-                <button type="button" className="sh-btn" onClick={() => setShowCreateService(false)}>Cancel</button>
               </div>
             </form>
           </div>
@@ -1212,15 +1247,45 @@ export default function AdminApp({
 
       {editingService && (
         <div className="sh-modal-backdrop">
-          <div className="sh-modal">
+          <div className="sh-modal" style={{ maxWidth: 460 }}>
             <h2 className="sh-section-title">Edit Service</h2>
-            <form onSubmit={handleUpdateService} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20 }}>
-              <input className="sh-input" placeholder="Service Name (e.g. Sofa Cleaning)" required value={editingService.name} onChange={e => setEditingService({...editingService, name: e.target.value})} />
-              <input className="sh-input" placeholder="Price (₹)" type="number" required value={editingService.price} onChange={e => setEditingService({...editingService, price: e.target.value})} />
-              <input className="sh-input" placeholder="Category Skill (e.g. Cleaning)" required value={editingService.skill} onChange={e => setEditingService({...editingService, skill: e.target.value})} />
-              <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+            <p className="sh-section-sub">Update category, price, and details for #{editingService.id}</p>
+            <form onSubmit={handleUpdateService} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Tier-1 Category</label>
+                <select
+                  className="sh-input"
+                  value={editingService.category || 'Quick Repairs & Fixes'}
+                  onChange={e => setEditingService({ ...editingService, category: e.target.value })}
+                >
+                  {CATEGORIES_TIER1.map(cat => (
+                    <option key={cat.id} value={cat.name}>{cat.emoji} {cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Service Name</label>
+                  <input className="sh-input" placeholder="Service Name" required value={editingService.name} onChange={e => setEditingService({...editingService, name: e.target.value})} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Price (₹)</label>
+                  <input className="sh-input" placeholder="Price (₹)" type="number" required value={editingService.price} onChange={e => setEditingService({...editingService, price: e.target.value})} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Subcategory / Skill</label>
+                  <input className="sh-input" placeholder="Skill / Subcategory" required value={editingService.skill || editingService.subCategory || ''} onChange={e => setEditingService({...editingService, skill: e.target.value, subCategory: e.target.value})} />
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Description</label>
+                <textarea className="sh-input" style={{ minHeight: 60, resize: 'vertical' }} placeholder="Description..." value={editingService.desc || ''} onChange={e => setEditingService({...editingService, desc: e.target.value})} />
+              </div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 10, justifyContent: 'flex-end' }}>
+                <button type="button" className="sh-btn sh-btn-ghost" onClick={() => setEditingService(null)}>Cancel</button>
                 <button type="submit" className="sh-btn sh-btn-primary">Save Changes</button>
-                <button type="button" className="sh-btn" onClick={() => setEditingService(null)}>Cancel</button>
               </div>
             </form>
           </div>
