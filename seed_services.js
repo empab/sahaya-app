@@ -87,16 +87,27 @@ export const NEW_SERVICES = [
 ];
 
 async function seed() {
-  console.log('Seeding clean service catalog matching all 10 Tier-1 categories into Supabase database...');
+  console.log('Cleaning old services (IDs < 100) and seeding fresh catalog into Supabase...');
+  try {
+    const { error: bkgErr } = await supabase.from('bookings').delete().lt('service_id', 100);
+    if (bkgErr) console.warn('Bookings cleanup warning:', bkgErr.message);
+
+    const { error: svcErr } = await supabase.from('services').delete().lt('id', 100);
+    if (svcErr) console.warn('Services cleanup warning:', svcErr.message);
+    else console.log('Successfully wiped old services (IDs < 100)!');
+  } catch (e) {
+    console.warn('Wipe notice:', e);
+  }
+
   for (const s of NEW_SERVICES) {
     const { error } = await supabase.from('services').upsert(s, { onConflict: 'id' }).select();
     if (error) {
       console.error(`Error seeding ${s.name}:`, error.message);
     } else {
-      console.log(`Seeded: ${s.name} (Skill: ${s.skill})`);
+      console.log(`Seeded: ${s.name} (ID: ${s.id}, Skill: ${s.skill})`);
     }
   }
-  console.log('Finished seeding services into Supabase!');
+  console.log('✅ Finished seeding clean services into Supabase!');
 }
 
 seed();

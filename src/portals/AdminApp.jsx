@@ -9,7 +9,7 @@ import {
 
 import LoginScreen from '../components/LoginScreen.jsx';
 import StatusPill  from '../components/StatusPill.jsx';
-import { SERVICES, STATUS_META, serviceFor, providerFor } from '../data/mock.js';
+import { SERVICES, CATEGORIES_TIER1, STATUS_META, serviceFor, providerFor } from '../data/mock.js';
 import { supabase } from '../lib/supabase.js';
 
 // Upload photo directly to Supabase Storage ('marketplace-images' bucket)
@@ -149,8 +149,10 @@ export default function AdminApp({
   const [showCreateProvider, setShowCreateProvider] = useState(false);
   const [newProvider, setNewProvider] = useState({ name: '', phone: '', email: '', address: '', aadhaar_number: '', skill: 'House Help', price: '', username: '', password: '' });
   const [showCreateService, setShowCreateService] = useState(false);
-  const [newService, setNewService] = useState({ name: '', price: '', skill: '' });
+  const [newService, setNewService] = useState({ name: '', price: '', skill: '', category: 'Quick Repairs & Fixes', subCategory: 'Electrical' });
   const [editingService, setEditingService] = useState(null);
+  const [serviceCategoryFilter, setServiceCategoryFilter] = useState('all');
+  const [serviceSearchQuery,    setServiceSearchQuery]    = useState('');
 
   // Marketplace Management State
   const [showCreateMarketPost, setShowCreateMarketPost] = useState(false);
@@ -796,48 +798,129 @@ export default function AdminApp({
         {/* ---- SERVICES ---- */}
         {section === 'services' && (
           <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
               <div>
-                <h2 className="sh-section-title">Services</h2>
-                <p className="sh-section-sub">Categories customers can book from the home screen</p>
+                <h2 className="sh-section-title">Service Catalog</h2>
+                <p className="sh-section-sub">Manage 10 Tier-1 main categories and detailed subcategory services</p>
               </div>
               <button className="sh-btn sh-btn-primary" onClick={() => setShowCreateService(true)}>
                 + Create Service
               </button>
             </div>
+
+            {/* Category Filter Pills */}
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 12, marginBottom: 16 }}>
+              <button
+                onClick={() => setServiceCategoryFilter('all')}
+                className={'sh-btn sh-btn-sm ' + (serviceCategoryFilter === 'all' ? 'sh-btn-primary' : 'sh-btn-ghost')}
+                style={{ borderRadius: 20, whiteSpace: 'nowrap' }}
+              >
+                All Categories ({services.length})
+              </button>
+              {CATEGORIES_TIER1.map(cat => {
+                const count = services.filter(s => s.category === cat.name || s.categoryId === cat.id).length;
+                const isActive = serviceCategoryFilter === cat.name;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setServiceCategoryFilter(cat.name)}
+                    className={'sh-btn sh-btn-sm ' + (isActive ? 'sh-btn-primary' : 'sh-btn-ghost')}
+                    style={{ borderRadius: 20, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    <span>{cat.emoji}</span>
+                    <span>{cat.name}</span>
+                    <span style={{ opacity: 0.7, fontSize: 11 }}>({count})</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Search input for services */}
+            <div style={{ marginBottom: 16, maxWidth: 360 }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <Search size={16} color="var(--ink-soft)" style={{ position: 'absolute', left: 12 }} />
+                <input
+                  type="text"
+                  placeholder="Filter service name, subcategory, skill..."
+                  value={serviceSearchQuery}
+                  onChange={e => setServiceSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%', padding: '8px 12px 8px 36px', borderRadius: 8,
+                    border: '1px solid var(--border)', fontSize: 13, background: 'var(--bg)'
+                  }}
+                />
+              </div>
+            </div>
             
             <table className="sh-table">
               <thead>
-                <tr><th>Service</th><th>Category skill</th><th>Starting price</th><th>Bookings</th><th></th></tr>
+                <tr>
+                  <th>Service Name</th>
+                  <th>Tier-1 Category</th>
+                  <th>Subcategory / Skill</th>
+                  <th>Starting Price</th>
+                  <th>Bookings</th>
+                  <th>Status & Actions</th>
+                </tr>
               </thead>
               <tbody>
-                {services.map(s => {
-                  const liveCount = bookings.filter(b => b.serviceId === s.id).length;
-                  return (
-                  <tr key={s.id}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div className="sh-patch" style={{ width: 30, height: 30 }}>
-                          <LayoutGrid size={15} color="var(--teal)" />
-                        </div>
-                        {s.name}
-                      </div>
-                    </td>
-                    <td>{s.skill}</td>
-                    <td className="sh-price">₹{s.price}</td>
-                    <td>{liveCount}</td>
-                    <td>
-                      <span className="sh-pill" style={{ background: 'var(--green)22', color: 'var(--green)' }}>Active</span>
-                      <button 
-                        className="sh-btn sh-btn-sm sh-btn-ghost" 
-                        style={{ marginLeft: 10, padding: '4px 8px' }}
-                        onClick={() => setEditingService(s)}
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                )})}
+                {services
+                  .filter(s => {
+                    const matchCat = serviceCategoryFilter === 'all' || s.category === serviceCategoryFilter;
+                    const matchQuery = !serviceSearchQuery ||
+                      s.name.toLowerCase().includes(serviceSearchQuery.toLowerCase()) ||
+                      (s.subCategory && s.subCategory.toLowerCase().includes(serviceSearchQuery.toLowerCase())) ||
+                      (s.skill && s.skill.toLowerCase().includes(serviceSearchQuery.toLowerCase()));
+                    return matchCat && matchQuery;
+                  })
+                  .map(s => {
+                    const liveCount = bookings.filter(b => b.serviceId === s.id).length;
+                    const catObj = CATEGORIES_TIER1.find(c => c.name === s.category) || CATEGORIES_TIER1[0];
+                    return (
+                      <tr key={s.id}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div className="sh-patch" style={{ width: 32, height: 32, background: 'var(--teal-tint)', borderRadius: 8 }}>
+                              <span style={{ fontSize: 16 }}>{catObj?.emoji || '🛠️'}</span>
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: 14 }}>{s.name}</div>
+                              <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>{s.desc}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span style={{
+                            fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
+                            background: 'var(--teal-tint)', color: 'var(--teal)'
+                          }}>
+                            {s.category || 'Quick Repairs'}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: 12, fontWeight: 500 }}>
+                            {s.subCategory ? `${s.subCategory} · ` : ''}{s.skill}
+                          </span>
+                        </td>
+                        <td className="sh-price">₹{s.price}</td>
+                        <td>
+                          <span style={{ fontWeight: 600 }}>{liveCount}</span> <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>live</span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span className="sh-pill" style={{ background: 'var(--green)22', color: 'var(--green)' }}>Active</span>
+                            <button 
+                              className="sh-btn sh-btn-sm sh-btn-ghost" 
+                              style={{ padding: '4px 8px' }}
+                              onClick={() => setEditingService(s)}
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </>
