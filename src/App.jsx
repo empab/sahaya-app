@@ -3,7 +3,7 @@ import Landing     from './portals/Landing.jsx';
 import UserApp     from './portals/UserApp.jsx';
 import ProviderApp from './portals/ProviderApp.jsx';
 import AdminApp    from './portals/AdminApp.jsx';
-import { INITIAL_USERS, INITIAL_MARKETPLACE_POSTINGS, SERVICES, INITIAL_PROVIDERS, INITIAL_BOOKINGS } from './data/mock.js';
+import { SERVICES } from './data/mock.js';
 import { supabase } from './lib/supabase.js';
 
 // Helper to convert DB snake_case to app camelCase
@@ -62,25 +62,21 @@ export default function App() {
 
         if (sessionData) setSession(sessionData);
 
-        setProviders(pData.length > 0 ? pData : INITIAL_PROVIDERS);
-        setBookings(bData.length > 0 ? bData.map(transformBooking) : INITIAL_BOOKINGS);
+        setProviders(pData);
+        setBookings(bData.map(transformBooking));
         setServices(sData.length > 0 ? sData : SERVICES);
-        setMarketplacePostings(mData.length > 0 ? mData : INITIAL_MARKETPLACE_POSTINGS);
+        setMarketplacePostings(mData);
 
-        if (cData.length > 0) {
-          setUsers(cData.map(c => ({
-            id: c.id,
-            name: c.name || '-',
-            email: c.email || '-',
-            phone: c.phone || '-',
-            password: '*****',
-            joined: c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
-            lastLogin: 'Active',
-            bookingsCount: bData.filter(b => b.phone === c.phone || b.customer_name === c.name).length,
-          })));
-        } else {
-          setUsers(INITIAL_USERS);
-        }
+        setUsers(cData.map(c => ({
+          id: c.id,
+          name: c.name || '-',
+          email: c.email || '-',
+          phone: c.phone || '-',
+          password: '*****',
+          joined: c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+          lastLogin: 'Active',
+          bookingsCount: bData.filter(b => b.phone === c.phone || b.customer_name === c.name).length,
+        })));
       } catch (err) {
         console.error('App init error:', err);
       } finally {

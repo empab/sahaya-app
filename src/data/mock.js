@@ -28,68 +28,68 @@ export const CATEGORIES_TIER1 = [
 
 export const SERVICES = [
   // 1. Quick Repairs & Fixes
-  { id: 101, category: 'Quick Repairs & Fixes', subCategory: 'Electrical', name: 'Switchboard Fix & Repair', icon: Zap, price: 249, skill: 'Electrical', desc: 'Wiring, switch replacements and socket troubleshooting.', bookings: '42' },
-  { id: 102, category: 'Quick Repairs & Fixes', subCategory: 'Electrical', name: 'Fan Fitting & Repair', icon: Zap, price: 299, skill: 'Electrical', desc: 'Ceiling and exhaust fan installation and capacitor fix.', bookings: '38' },
-  { id: 103, category: 'Quick Repairs & Fixes', subCategory: 'Electrical', name: 'Light Fitting Installation', icon: Zap, price: 199, skill: 'Electrical', desc: 'LED tube light, chandelier, and decorative light setup.', bookings: '51' },
-  { id: 104, category: 'Quick Repairs & Fixes', subCategory: 'Electrical', name: 'Complete Wiring Inspection', icon: Zap, price: 499, skill: 'Electrical', desc: 'Full home electrical safety audit and MCB breaker check.', bookings: '29' },
-  { id: 105, category: 'Quick Repairs & Fixes', subCategory: 'Plumbing', name: 'Tap Leak Repair', icon: Wrench, price: 199, skill: 'Plumbing', desc: 'Tap washer replacement, thread sealing, and nozzle fix.', bookings: '64' },
-  { id: 106, category: 'Quick Repairs & Fixes', subCategory: 'Plumbing', name: 'Pipe Line Works', icon: Wrench, price: 399, skill: 'Plumbing', desc: 'CPVC/PVC pipe joining, line extension, and valve fitting.', bookings: '47' },
-  { id: 107, category: 'Quick Repairs & Fixes', subCategory: 'Plumbing', name: 'Drain Unblocking', icon: Wrench, price: 449, skill: 'Plumbing', desc: 'Kitchen sink and bathroom drainage unclogging.', bookings: '35' },
-  { id: 108, category: 'Quick Repairs & Fixes', subCategory: 'Plumbing', name: 'Flush Tank Repair', icon: Wrench, price: 349, skill: 'Plumbing', desc: 'Syphon kit replacement, inlet valve repair, and leak fix.', bookings: '28' },
-  { id: 109, category: 'Quick Repairs & Fixes', subCategory: 'Carpentry', name: 'Lock Repair & Replacement', icon: Hammer, price: 299, skill: 'Carpentry', desc: 'Main door lock, latch, and mortise handle fitting.', bookings: '31' },
-  { id: 110, category: 'Quick Repairs & Fixes', subCategory: 'Carpentry', name: 'Hinges & Door Repair', icon: Hammer, price: 349, skill: 'Carpentry', desc: 'Door alignment, hydraulic hinge fixing, and planed doors.', bookings: '22' },
-  { id: 111, category: 'Quick Repairs & Fixes', subCategory: 'Carpentry', name: 'Furniture Assembly', icon: Hammer, price: 499, skill: 'Carpentry', desc: 'Bed, table, wardrobe assembly and woodwork fixing.', bookings: '40' },
-  { id: 112, category: 'Quick Repairs & Fixes', subCategory: 'Specialized', name: 'Glass & Window Works', icon: Hammer, price: 549, skill: 'Glass Works', desc: 'Window pane replacement, toughened glass, and mirror fitting.', bookings: '19' },
+  { id: 101, category: 'Quick Repairs & Fixes', subCategory: 'Electrical', name: 'Switchboard Fix & Repair', icon: Zap, price: 249, skill: 'Electrical', desc: 'Wiring, switch replacements and socket troubleshooting.', bookings: '0' },
+  { id: 102, category: 'Quick Repairs & Fixes', subCategory: 'Electrical', name: 'Fan Fitting & Repair', icon: Zap, price: 299, skill: 'Electrical', desc: 'Ceiling and exhaust fan installation and capacitor fix.', bookings: '0' },
+  { id: 103, category: 'Quick Repairs & Fixes', subCategory: 'Electrical', name: 'Light Fitting Installation', icon: Zap, price: 199, skill: 'Electrical', desc: 'LED tube light, chandelier, and decorative light setup.', bookings: '0' },
+  { id: 104, category: 'Quick Repairs & Fixes', subCategory: 'Electrical', name: 'Complete Wiring Inspection', icon: Zap, price: 499, skill: 'Electrical', desc: 'Full home electrical safety audit and MCB breaker check.', bookings: '0' },
+  { id: 105, category: 'Quick Repairs & Fixes', subCategory: 'Plumbing', name: 'Tap Leak Repair', icon: Wrench, price: 199, skill: 'Plumbing', desc: 'Tap washer replacement, thread sealing, and nozzle fix.', bookings: '0' },
+  { id: 106, category: 'Quick Repairs & Fixes', subCategory: 'Plumbing', name: 'Pipe Line Works', icon: Wrench, price: 399, skill: 'Plumbing', desc: 'CPVC/PVC pipe joining, line extension, and valve fitting.', bookings: '0' },
+  { id: 107, category: 'Quick Repairs & Fixes', subCategory: 'Plumbing', name: 'Drain Unblocking', icon: Wrench, price: 449, skill: 'Plumbing', desc: 'Kitchen sink and bathroom drainage unclogging.', bookings: '0' },
+  { id: 108, category: 'Quick Repairs & Fixes', subCategory: 'Plumbing', name: 'Flush Tank Repair', icon: Wrench, price: 349, skill: 'Plumbing', desc: 'Syphon kit replacement, inlet valve repair, and leak fix.', bookings: '0' },
+  { id: 109, category: 'Quick Repairs & Fixes', subCategory: 'Carpentry', name: 'Lock Repair & Replacement', icon: Hammer, price: 299, skill: 'Carpentry', desc: 'Main door lock, latch, and mortise handle fitting.', bookings: '0' },
+  { id: 110, category: 'Quick Repairs & Fixes', subCategory: 'Carpentry', name: 'Hinges & Door Repair', icon: Hammer, price: 349, skill: 'Carpentry', desc: 'Door alignment, hydraulic hinge fixing, and planed doors.', bookings: '0' },
+  { id: 111, category: 'Quick Repairs & Fixes', subCategory: 'Carpentry', name: 'Furniture Assembly', icon: Hammer, price: 499, skill: 'Carpentry', desc: 'Bed, table, wardrobe assembly and woodwork fixing.', bookings: '0' },
+  { id: 112, category: 'Quick Repairs & Fixes', subCategory: 'Specialized', name: 'Glass & Window Works', icon: Hammer, price: 549, skill: 'Glass Works', desc: 'Window pane replacement, toughened glass, and mirror fitting.', bookings: '0' },
 
   // 2. Appliance Care & Repairs
-  { id: 201, category: 'Appliance Care & Repairs', subCategory: 'Cooling', name: 'AC Jet Service & Wash', icon: Wind, price: 599, skill: 'Appliance Repair', desc: 'High-pressure jet pump filter wash and coil cleaning.', bookings: '88' },
-  { id: 202, category: 'Appliance Care & Repairs', subCategory: 'Cooling', name: 'AC Gas Refilling', icon: Wind, price: 1499, skill: 'Appliance Repair', desc: 'R32 / R410 refrigerant gas charging and leak testing.', bookings: '54' },
-  { id: 203, category: 'Appliance Care & Repairs', subCategory: 'Cooling', name: 'Fridge Repair (All Brands)', icon: Snowflake, price: 449, skill: 'Appliance Repair', desc: 'Thermostat, compressor relay, and cooling troubleshooting.', bookings: '62' },
-  { id: 204, category: 'Appliance Care & Repairs', subCategory: 'Kitchen Appliances', name: 'RO Water Purifier Service', icon: Droplet, price: 399, skill: 'Appliance Repair', desc: 'Filter replacement, membrane check, and TDS tuning.', bookings: '45' },
-  { id: 205, category: 'Appliance Care & Repairs', subCategory: 'Kitchen Appliances', name: 'Gas Stove & Chimney Service', icon: Package, price: 349, skill: 'Appliance Repair', desc: 'Burner cleaning, auto-ignition repair, and chimney ducting.', bookings: '37' },
-  { id: 206, category: 'Appliance Care & Repairs', subCategory: 'Kitchen Appliances', name: 'Microwave & OTG Repair', icon: Package, price: 349, skill: 'Appliance Repair', desc: 'Magnetron replacement, turntable fix, and heating issue.', bookings: '29' },
-  { id: 207, category: 'Appliance Care & Repairs', subCategory: 'Laundry & Home', name: 'Washing Machine Repair', icon: Droplet, price: 499, skill: 'Appliance Repair', desc: 'Front-load and top-load drum, motor, and PCB repair.', bookings: '73' },
-  { id: 208, category: 'Appliance Care & Repairs', subCategory: 'Laundry & Home', name: 'Water Heater / Geyser Repair', icon: Droplet, price: 399, skill: 'Appliance Repair', desc: 'Heating element replacement, thermostat, and safety valve.', bookings: '33' },
-  { id: 209, category: 'Appliance Care & Repairs', subCategory: 'Entertainment & Electronics', name: 'LED TV Repair & Wall Mount', icon: Tv, price: 499, skill: 'Appliance Repair', desc: 'Display panel, backlight, motherboard, and bracket installation.', bookings: '56' },
+  { id: 201, category: 'Appliance Care & Repairs', subCategory: 'Cooling', name: 'AC Jet Service & Wash', icon: Wind, price: 599, skill: 'Appliance Repair', desc: 'High-pressure jet pump filter wash and coil cleaning.', bookings: '0' },
+  { id: 202, category: 'Appliance Care & Repairs', subCategory: 'Cooling', name: 'AC Gas Refilling', icon: Wind, price: 1499, skill: 'Appliance Repair', desc: 'R32 / R410 refrigerant gas charging and leak testing.', bookings: '0' },
+  { id: 203, category: 'Appliance Care & Repairs', subCategory: 'Cooling', name: 'Fridge Repair (All Brands)', icon: Snowflake, price: 449, skill: 'Appliance Repair', desc: 'Thermostat, compressor relay, and cooling troubleshooting.', bookings: '0' },
+  { id: 204, category: 'Appliance Care & Repairs', subCategory: 'Kitchen Appliances', name: 'RO Water Purifier Service', icon: Droplet, price: 399, skill: 'Appliance Repair', desc: 'Filter replacement, membrane check, and TDS tuning.', bookings: '0' },
+  { id: 205, category: 'Appliance Care & Repairs', subCategory: 'Kitchen Appliances', name: 'Gas Stove & Chimney Service', icon: Package, price: 349, skill: 'Appliance Repair', desc: 'Burner cleaning, auto-ignition repair, and chimney ducting.', bookings: '0' },
+  { id: 206, category: 'Appliance Care & Repairs', subCategory: 'Kitchen Appliances', name: 'Microwave & OTG Repair', icon: Package, price: 349, skill: 'Appliance Repair', desc: 'Magnetron replacement, turntable fix, and heating issue.', bookings: '0' },
+  { id: 207, category: 'Appliance Care & Repairs', subCategory: 'Laundry & Home', name: 'Washing Machine Repair', icon: Droplet, price: 499, skill: 'Appliance Repair', desc: 'Front-load and top-load drum, motor, and PCB repair.', bookings: '0' },
+  { id: 208, category: 'Appliance Care & Repairs', subCategory: 'Laundry & Home', name: 'Water Heater / Geyser Repair', icon: Droplet, price: 399, skill: 'Appliance Repair', desc: 'Heating element replacement, thermostat, and safety valve.', bookings: '0' },
+  { id: 209, category: 'Appliance Care & Repairs', subCategory: 'Entertainment & Electronics', name: 'LED TV Repair & Wall Mount', icon: Tv, price: 499, skill: 'Appliance Repair', desc: 'Display panel, backlight, motherboard, and bracket installation.', bookings: '0' },
 
   // 3. Cleaning & Pest Control
-  { id: 301, category: 'Cleaning & Pest Control', subCategory: 'Full House & Spot', name: 'Bathroom Deep Cleaning', icon: Sparkles, price: 499, skill: 'House Cleaning', desc: 'Tile de-scaling, hard water stain removal, and sanitization.', bookings: '92' },
-  { id: 302, category: 'Cleaning & Pest Control', subCategory: 'Full House & Spot', name: 'Kitchen Deep Cleaning', icon: Sparkles, price: 699, skill: 'House Cleaning', desc: 'Oil stain degreasing, cabinet wiping, and sink scrubbing.', bookings: '68' },
-  { id: 303, category: 'Cleaning & Pest Control', subCategory: 'Full House & Spot', name: 'Sofa & Upholstery Cleaning', icon: Sparkles, price: 799, skill: 'House Cleaning', desc: 'Vacuuming, injection-extraction shampoo wash for 5-seater.', bookings: '52' },
-  { id: 304, category: 'Cleaning & Pest Control', subCategory: 'Utility Cleaning', name: 'Water Tank Cleaning', icon: Sparkles, price: 599, skill: 'Tank Cleaning', desc: 'Sludge removal, high-pressure washing, and UV disinfection.', bookings: '47' },
-  { id: 306, category: 'Cleaning & Pest Control', subCategory: 'Sanitizations', name: 'Pest Control Spray (Cockroach/Termite)', icon: Sparkles, price: 899, skill: 'Pest Control', desc: 'Odourless herbalgel and chemical spray with 6-month warranty.', bookings: '58' },
+  { id: 301, category: 'Cleaning & Pest Control', subCategory: 'Full House & Spot', name: 'Bathroom Deep Cleaning', icon: Sparkles, price: 499, skill: 'House Cleaning', desc: 'Tile de-scaling, hard water stain removal, and sanitization.', bookings: '0' },
+  { id: 302, category: 'Cleaning & Pest Control', subCategory: 'Full House & Spot', name: 'Kitchen Deep Cleaning', icon: Sparkles, price: 699, skill: 'House Cleaning', desc: 'Oil stain degreasing, cabinet wiping, and sink scrubbing.', bookings: '0' },
+  { id: 303, category: 'Cleaning & Pest Control', subCategory: 'Full House & Spot', name: 'Sofa & Upholstery Cleaning', icon: Sparkles, price: 799, skill: 'House Cleaning', desc: 'Vacuuming, injection-extraction shampoo wash for 5-seater.', bookings: '0' },
+  { id: 304, category: 'Cleaning & Pest Control', subCategory: 'Utility Cleaning', name: 'Water Tank Cleaning', icon: Sparkles, price: 599, skill: 'Tank Cleaning', desc: 'Sludge removal, high-pressure washing, and UV disinfection.', bookings: '0' },
+  { id: 306, category: 'Cleaning & Pest Control', subCategory: 'Sanitizations', name: 'Pest Control Spray (Cockroach/Termite)', icon: Sparkles, price: 899, skill: 'Pest Control', desc: 'Odourless herbalgel and chemical spray with 6-month warranty.', bookings: '0' },
 
   // 4. Health & Medical Care
-  { id: 401, category: 'Health & Medical Care', subCategory: 'At-Home Care', name: 'Certified Nurse & Injection Care', icon: Stethoscope, price: 299, skill: 'Nursing', desc: 'Dressing, IV fluid setup, catheter, and vital monitoring.', bookings: '63' },
-  { id: 402, category: 'Health & Medical Care', subCategory: 'At-Home Care', name: 'Homeo & Ayurveda Therapy', icon: Stethoscope, price: 399, skill: 'Ayurveda', desc: 'Traditional Kerala consultation and therapeutic massage.', bookings: '37' },
-  { id: 403, category: 'Health & Medical Care', subCategory: 'Consultations', name: 'Doctor Home Visit', icon: Stethoscope, price: 799, skill: 'Doctor', desc: 'General physician home consultation and prescription.', bookings: '49' },
+  { id: 401, category: 'Health & Medical Care', subCategory: 'At-Home Care', name: 'Certified Nurse & Injection Care', icon: Stethoscope, price: 299, skill: 'Nursing', desc: 'Dressing, IV fluid setup, catheter, and vital monitoring.', bookings: '0' },
+  { id: 402, category: 'Health & Medical Care', subCategory: 'At-Home Care', name: 'Homeo & Ayurveda Therapy', icon: Stethoscope, price: 399, skill: 'Ayurveda', desc: 'Traditional Kerala consultation and therapeutic massage.', bookings: '0' },
+  { id: 403, category: 'Health & Medical Care', subCategory: 'Consultations', name: 'Doctor Home Visit', icon: Stethoscope, price: 799, skill: 'Doctor', desc: 'General physician home consultation and prescription.', bookings: '0' },
 
   // 5. Auto & Vehicle Care
-  { id: 501, category: 'Auto & Vehicle Care', subCategory: 'Emergency Breakdown', name: 'Towing & Recovery Van', icon: Car, price: 999, skill: 'Towing', desc: 'Flatbed towing and breakdown recovery for cars & bikes.', bookings: '44' },
-  { id: 502, category: 'Auto & Vehicle Care', subCategory: 'Emergency Breakdown', name: 'Tyre Puncture Repair (On-Site)', icon: Car, price: 249, skill: 'Mechanic', desc: 'Tubeless puncture plug and air refill at your location.', bookings: '78' },
-  { id: 504, category: 'Auto & Vehicle Care', subCategory: 'Routine Care', name: 'Foam Car Wash & Detailing', icon: Car, price: 499, skill: 'Car Wash', desc: 'Exterior foam wash, interior vacuuming, and dashboard polish.', bookings: '81' },
-  { id: 505, category: 'Auto & Vehicle Care', subCategory: 'Transport', name: 'On-Demand Personal Driver', icon: Car, price: 499, skill: 'Driver', desc: 'Experienced verified drivers for manual & automatic vehicles.', bookings: '95' },
+  { id: 501, category: 'Auto & Vehicle Care', subCategory: 'Emergency Breakdown', name: 'Towing & Recovery Van', icon: Car, price: 999, skill: 'Towing', desc: 'Flatbed towing and breakdown recovery for cars & bikes.', bookings: '0' },
+  { id: 502, category: 'Auto & Vehicle Care', subCategory: 'Emergency Breakdown', name: 'Tyre Puncture Repair (On-Site)', icon: Car, price: 249, skill: 'Mechanic', desc: 'Tubeless puncture plug and air refill at your location.', bookings: '0' },
+  { id: 504, category: 'Auto & Vehicle Care', subCategory: 'Routine Care', name: 'Foam Car Wash & Detailing', icon: Car, price: 499, skill: 'Car Wash', desc: 'Exterior foam wash, interior vacuuming, and dashboard polish.', bookings: '0' },
+  { id: 505, category: 'Auto & Vehicle Care', subCategory: 'Transport', name: 'On-Demand Personal Driver', icon: Car, price: 499, skill: 'Driver', desc: 'Experienced verified drivers for manual & automatic vehicles.', bookings: '0' },
 
   // 6. Professional & Business Services
-  { id: 601, category: 'Professional & Business Services', subCategory: 'Documentation', name: 'Digital Signature (DSC) Creation', icon: Briefcase, price: 499, skill: 'Documentation', desc: 'Class 3 USB token digital signature for tenders and GST.', bookings: '29' },
-  { id: 602, category: 'Professional & Business Services', subCategory: 'Financial & Legal', name: 'Chartered Accountant Consultation', icon: Briefcase, price: 999, skill: 'Accounting', desc: 'ITR filing, GST registration, audit, and tax planning.', bookings: '34' },
-  { id: 603, category: 'Professional & Business Services', subCategory: 'IT & Digital', name: 'Website Design & Software', icon: Briefcase, price: 2499, skill: 'IT Services', desc: 'Responsive web development, ecommerce, and custom software.', bookings: '21' },
+  { id: 601, category: 'Professional & Business Services', subCategory: 'Documentation', name: 'Digital Signature (DSC) Creation', icon: Briefcase, price: 499, skill: 'Documentation', desc: 'Class 3 USB token digital signature for tenders and GST.', bookings: '0' },
+  { id: 602, category: 'Professional & Business Services', subCategory: 'Financial & Legal', name: 'Chartered Accountant Consultation', icon: Briefcase, price: 999, skill: 'Accounting', desc: 'ITR filing, GST registration, audit, and tax planning.', bookings: '0' },
+  { id: 603, category: 'Professional & Business Services', subCategory: 'IT & Digital', name: 'Website Design & Software', icon: Briefcase, price: 2499, skill: 'IT Services', desc: 'Responsive web development, ecommerce, and custom software.', bookings: '0' },
 
   // 7. Tutors & Consultancies
-  { id: 701, category: 'Tutors & Consultancies', subCategory: 'Education', name: 'Home Tutors (School & College)', icon: GraduationCap, price: 499, skill: 'Tutor', desc: 'Experienced tutors for Maths, Science, English & State/CBSE.', bookings: '62' },
-  { id: 702, category: 'Tutors & Consultancies', subCategory: 'Education', name: 'Job & Education Consultancy', icon: GraduationCap, price: 599, skill: 'Consultant', desc: 'Overseas education guidance, resume writing, and job placement.', bookings: '38' },
+  { id: 701, category: 'Tutors & Consultancies', subCategory: 'Education', name: 'Home Tutors (School & College)', icon: GraduationCap, price: 499, skill: 'Tutor', desc: 'Experienced tutors for Maths, Science, English & State/CBSE.', bookings: '0' },
+  { id: 702, category: 'Tutors & Consultancies', subCategory: 'Education', name: 'Job & Education Consultancy', icon: GraduationCap, price: 599, skill: 'Consultant', desc: 'Overseas education guidance, resume writing, and job placement.', bookings: '0' },
 
   // 8. Pet & Animal Care
-  { id: 801, category: 'Pet & Animal Care', subCategory: 'Veterinary', name: 'Vet Doctor Visit & Vaccination', icon: Dog, price: 499, skill: 'Veterinary', desc: 'At-home pet health checkup, anti-rabies, and deworming.', bookings: '41' },
-  { id: 802, category: 'Pet & Animal Care', subCategory: 'Pet Services', name: 'Pet Grooming & Spa Wash', icon: Dog, price: 599, skill: 'Pet Grooming', desc: 'Nail clipping, ear cleaning, fur trimming, and medicated bath.', bookings: '35' },
+  { id: 801, category: 'Pet & Animal Care', subCategory: 'Veterinary', name: 'Vet Doctor Visit & Vaccination', icon: Dog, price: 499, skill: 'Veterinary', desc: 'At-home pet health checkup, anti-rabies, and deworming.', bookings: '0' },
+  { id: 802, category: 'Pet & Animal Care', subCategory: 'Pet Services', name: 'Pet Grooming & Spa Wash', icon: Dog, price: 599, skill: 'Pet Grooming', desc: 'Nail clipping, ear cleaning, fur trimming, and medicated bath.', bookings: '0' },
 
   // 9. Food & Daily Supplies
-  { id: 901, category: 'Food & Daily Supplies', subCategory: 'Catering', name: 'Event Catering & Sadya Booking', icon: Utensils, price: 1999, skill: 'Catering', desc: 'Traditional Kerala Sadya, non-veg catering for functions.', bookings: '53' },
-  { id: 902, category: 'Food & Daily Supplies', subCategory: 'Daily Supplies', name: 'Fresh Farm Dairy & Meat Supply', icon: Utensils, price: 199, skill: 'Daily Supply', desc: 'Fresh milk, organic eggs, chicken and mutton doorstep delivery.', bookings: '76' },
+  { id: 901, category: 'Food & Daily Supplies', subCategory: 'Catering', name: 'Event Catering & Sadya Booking', icon: Utensils, price: 1999, skill: 'Catering', desc: 'Traditional Kerala Sadya, non-veg catering for functions.', bookings: '0' },
+  { id: 902, category: 'Food & Daily Supplies', subCategory: 'Daily Supplies', name: 'Fresh Farm Dairy & Meat Supply', icon: Utensils, price: 199, skill: 'Daily Supply', desc: 'Fresh milk, organic eggs, chicken and mutton doorstep delivery.', bookings: '0' },
 
   // 10. Construction & Home Makeover
-  { id: 1001, category: 'Construction & Home Makeover', subCategory: 'Makeover', name: 'Interior & Exterior Painting', icon: Paintbrush, price: 999, skill: 'Home Painting', desc: 'Asian Paints, Berger wall putty, weather-proof coating.', bookings: '48' },
-  { id: 1002, category: 'Construction & Home Makeover', subCategory: 'Construction', name: 'Masonry & Tile Fitting', icon: Hammer, price: 899, skill: 'Masonry', desc: 'Granite, vitrified tile laying, compound wall masonry.', bookings: '39' },
+  { id: 1001, category: 'Construction & Home Makeover', subCategory: 'Makeover', name: 'Interior & Exterior Painting', icon: Paintbrush, price: 999, skill: 'Home Painting', desc: 'Asian Paints, Berger wall putty, weather-proof coating.', bookings: '0' },
+  { id: 1002, category: 'Construction & Home Makeover', subCategory: 'Construction', name: 'Masonry & Tile Fitting', icon: Hammer, price: 899, skill: 'Masonry', desc: 'Granite, vitrified tile laying, compound wall masonry.', bookings: '0' },
 ];
 
 export const INITIAL_PROVIDERS = [
