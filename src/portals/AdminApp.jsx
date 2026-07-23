@@ -267,6 +267,30 @@ export default function AdminApp({
     setNewProvider({ name: '', phone: '', email: '', address: '', aadhaar_number: '', skill: 'House Help', price: '', username: '', password: '' });
   }
 
+  const [editingProvider, setEditingProvider] = useState(null);
+
+  function handleUpdateProvider(e) {
+    e.preventDefault();
+    if (!editingProvider) return;
+    const updatedData = {
+      name: editingProvider.name,
+      username: editingProvider.username,
+      password: editingProvider.password,
+      phone: editingProvider.phone,
+      email: editingProvider.email,
+      address: editingProvider.address,
+      aadhaar_number: editingProvider.aadhaar_number || editingProvider.aadhaar || '',
+      skill: editingProvider.skill,
+      price: parseFloat(editingProvider.price) || 0,
+      charge: parseFloat(editingProvider.charge) || 0,
+      is_available: editingProvider.is_available === true || editingProvider.is_available === 'true',
+      status: editingProvider.status || 'approved',
+      rating: parseFloat(editingProvider.rating) || 4.8
+    };
+    updateProvider(editingProvider.id, updatedData);
+    setEditingProvider(null);
+  }
+
   function handleCreateService(e) {
     e.preventDefault();
     addService({
@@ -372,14 +396,23 @@ export default function AdminApp({
 
           {/* Provider Details (Sign-up) */}
           <div className="sh-card" style={{ marginBottom: 20 }}>
-            <h3 style={{ marginTop: 0, fontSize: 16 }}>Sign-up Details</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h3 style={{ margin: 0, fontSize: 16 }}>Sign-up & Account Details</h3>
+              <button
+                className="sh-btn sh-btn-primary sh-btn-sm"
+                onClick={() => setEditingProvider(p)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <Pencil size={13} /> Edit Provider Profile
+              </button>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: 14 }}>
               <div><strong>Username:</strong> {p.username || '—'}</div>
               <div><strong>Password:</strong> {p.password || '—'}</div>
               <div><strong>Email:</strong> {p.email || '—'}</div>
               <div><strong>Phone:</strong> {p.phone || '—'}</div>
-              <div><strong>Aadhaar Number:</strong> {p.aadhaar_number || '—'}</div>
-              <div><strong>Base Price:</strong> ₹{p.price || p.charge || 0}</div>
+              <div><strong>Aadhaar Number:</strong> {p.aadhaar_number || p.aadhaar || '—'}</div>
+              <div><strong>Base Price:</strong> ₹{p.price || 0}</div>
               <div style={{ gridColumn: 'span 2' }}><strong>Address:</strong> {p.address || '—'}</div>
             </div>
           </div>
@@ -824,7 +857,21 @@ export default function AdminApp({
                         <ShieldCheck size={11} /> Verified
                       </span>
                     </td>
-                    <td><ChevronRight size={14} color="var(--ink-soft)" /></td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button
+                          className="sh-btn sh-btn-sm sh-btn-ghost"
+                          style={{ padding: '4px 8px', fontSize: 12, border: '1px solid var(--border)' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingProvider(p);
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <ChevronRight size={14} color="var(--ink-soft)" />
+                      </div>
+                    </td>
                   </tr>
                 )})}
               </tbody>
@@ -1392,6 +1439,194 @@ export default function AdminApp({
               <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
                 <button type="button" className="sh-btn sh-btn-ghost" onClick={() => setShowCreateProvider(false)}>Cancel</button>
                 <button type="submit" className="sh-btn sh-btn-primary">Save Provider</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Complete Edit Provider Modal */}
+      {editingProvider && (
+        <div className="sh-modal-backdrop">
+          <div className="sh-modal" style={{ maxWidth: 540 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+              <div>
+                <h2 className="sh-section-title">Edit Provider Profile</h2>
+                <p className="sh-section-sub" style={{ margin: 0 }}>Update account credentials, skills, pricing, and status for #{editingProvider.id}</p>
+              </div>
+              <button
+                className="sh-btn sh-btn-ghost sh-btn-sm"
+                onClick={() => setEditingProvider(null)}
+                style={{ padding: '4px 8px' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateProvider} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Full Name</label>
+                  <input
+                    required
+                    className="sh-input"
+                    value={editingProvider.name || ''}
+                    onChange={e => setEditingProvider({ ...editingProvider, name: e.target.value })}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Username</label>
+                  <input
+                    required
+                    className="sh-input"
+                    value={editingProvider.username || ''}
+                    onChange={e => setEditingProvider({ ...editingProvider, username: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Password</label>
+                  <input
+                    required
+                    type="text"
+                    className="sh-input"
+                    value={editingProvider.password || ''}
+                    onChange={e => setEditingProvider({ ...editingProvider, password: e.target.value })}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Phone Number</label>
+                  <input
+                    required
+                    type="tel"
+                    className="sh-input"
+                    value={editingProvider.phone || ''}
+                    onChange={e => setEditingProvider({ ...editingProvider, phone: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Email Address</label>
+                  <input
+                    type="email"
+                    className="sh-input"
+                    value={editingProvider.email || ''}
+                    onChange={e => setEditingProvider({ ...editingProvider, email: e.target.value })}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Aadhaar Number</label>
+                  <input
+                    type="text"
+                    className="sh-input"
+                    placeholder="XXXX XXXX XXXX"
+                    value={editingProvider.aadhaar_number || editingProvider.aadhaar || ''}
+                    onChange={e => setEditingProvider({ ...editingProvider, aadhaar_number: e.target.value, aadhaar: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Primary Skill(s)</label>
+                  <input
+                    required
+                    className="sh-input"
+                    placeholder="e.g. Electrical, Carpentry"
+                    value={editingProvider.skill || ''}
+                    onChange={e => setEditingProvider({ ...editingProvider, skill: e.target.value })}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Base Price (₹)</label>
+                  <input
+                    required
+                    type="number"
+                    className="sh-input"
+                    value={editingProvider.price !== undefined ? editingProvider.price : (editingProvider.charge || 0)}
+                    onChange={e => setEditingProvider({ ...editingProvider, price: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Wallet Balance (₹)</label>
+                  <input
+                    type="number"
+                    className="sh-input"
+                    value={editingProvider.charge !== undefined ? editingProvider.charge : 0}
+                    onChange={e => setEditingProvider({ ...editingProvider, charge: e.target.value })}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Platform Rating</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1.0"
+                    max="5.0"
+                    className="sh-input"
+                    value={editingProvider.rating !== undefined ? editingProvider.rating : 4.8}
+                    onChange={e => setEditingProvider({ ...editingProvider, rating: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Availability Status</label>
+                  <select
+                    className="sh-input"
+                    value={editingProvider.is_available === false || editingProvider.is_available === 'false' ? 'false' : 'true'}
+                    onChange={e => setEditingProvider({ ...editingProvider, is_available: e.target.value === 'true' })}
+                  >
+                    <option value="true">🟢 Active (Online for jobs)</option>
+                    <option value="false">⚪ Inactive (Offline)</option>
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Verification Status</label>
+                  <select
+                    className="sh-input"
+                    value={editingProvider.status || 'approved'}
+                    onChange={e => setEditingProvider({ ...editingProvider, status: e.target.value })}
+                  >
+                    <option value="approved">✅ Verified / Approved</option>
+                    <option value="pending">⏳ Pending Approval</option>
+                    <option value="rejected">❌ Rejected</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Physical Address</label>
+                <textarea
+                  className="sh-input"
+                  style={{ minHeight: 60, resize: 'vertical' }}
+                  value={editingProvider.address || ''}
+                  onChange={e => setEditingProvider({ ...editingProvider, address: e.target.value })}
+                />
+              </div>
+
+              <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                <button
+                  type="button"
+                  className="sh-btn sh-btn-ghost"
+                  onClick={() => setEditingProvider(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="sh-btn sh-btn-primary"
+                >
+                  Save Provider Details
+                </button>
               </div>
             </form>
           </div>
