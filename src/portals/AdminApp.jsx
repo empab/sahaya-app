@@ -12,6 +12,34 @@ import StatusPill  from '../components/StatusPill.jsx';
 import { SERVICES, CATEGORIES_TIER1, STATUS_META, serviceFor, providerFor } from '../data/mock.js';
 import { supabase } from '../lib/supabase.js';
 
+function getServiceCategory(s) {
+  if (!s) return 'Quick Repairs & Fixes';
+  if (s.category && s.category.trim()) return s.category;
+  const id = parseInt(s.id);
+  if (id >= 100 && id < 200) return 'Quick Repairs & Fixes';
+  if (id >= 200 && id < 300) return 'Appliance Care & Repairs';
+  if (id >= 300 && id < 400) return 'Cleaning & Pest Control';
+  if (id >= 400 && id < 500) return 'Health & Medical Care';
+  if (id >= 500 && id < 600) return 'Auto & Vehicle Care';
+  if (id >= 600 && id < 700) return 'Professional & Business Services';
+  if (id >= 700 && id < 800) return 'Tutors & Consultancies';
+  if (id >= 800 && id < 900) return 'Pet & Animal Care';
+  if (id >= 900 && id < 1000) return 'Food & Daily Supplies';
+  if (id >= 1000) return 'Construction & Home Makeover';
+  const mockS = SERVICES.find(m => m.id === id || m.name === s.name);
+  if (mockS && mockS.category) return mockS.category;
+  return 'Quick Repairs & Fixes';
+}
+
+function getServiceSubcategory(s) {
+  if (!s) return 'General';
+  if (s.subCategory && s.subCategory.trim()) return s.subCategory;
+  const id = parseInt(s.id);
+  const mockS = SERVICES.find(m => m.id === id || m.name === s.name);
+  if (mockS && mockS.subCategory) return mockS.subCategory;
+  return s.skill || 'General';
+}
+
 // Upload photo directly to Supabase Storage ('marketplace-images' bucket)
 async function uploadMarketPhoto(file, onProgress) {
   try {
@@ -153,6 +181,10 @@ export default function AdminApp({
   const [editingService, setEditingService] = useState(null);
   const [serviceCategoryFilter, setServiceCategoryFilter] = useState('all');
   const [serviceSearchQuery,    setServiceSearchQuery]    = useState('');
+  const [headerSkillFilter,    setHeaderSkillFilter]    = useState('all');
+  const [headerPriceSort,      setHeaderPriceSort]      = useState('none'); // 'none' | 'asc' | 'desc'
+  const [headerBookingsSort,   setHeaderBookingsSort]   = useState('none'); // 'none' | 'desc' | 'asc'
+  const [headerStatusFilter,   setHeaderStatusFilter]   = useState('all');  // 'all' | 'active' | 'inactive'
 
   // Marketplace Management State
   const [showCreateMarketPost, setShowCreateMarketPost] = useState(false);
@@ -823,7 +855,7 @@ export default function AdminApp({
                 All Categories ({services.length})
               </button>
               {CATEGORIES_TIER1.map(cat => {
-                const count = services.filter(s => s.category === cat.name || s.categoryId === cat.id).length;
+                const count = services.filter(s => getServiceCategory(s) === cat.name).length;
                 const isActive = serviceCategoryFilter === cat.name;
                 return (
                   <button
@@ -840,13 +872,13 @@ export default function AdminApp({
               })}
             </div>
 
-            {/* Search input for services */}
-            <div style={{ marginBottom: 16, maxWidth: 360 }}>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            {/* Search input & Active Filters Reset */}
+            <div style={{ marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: 340 }}>
                 <Search size={16} color="var(--ink-soft)" style={{ position: 'absolute', left: 12 }} />
                 <input
                   type="text"
-                  placeholder="Filter service name, subcategory, skill..."
+                  placeholder="Search service name, subcategory, skill..."
                   value={serviceSearchQuery}
                   onChange={e => setServiceSearchQuery(e.target.value)}
                   style={{
@@ -855,37 +887,205 @@ export default function AdminApp({
                   }}
                 />
               </div>
+
+              {(serviceCategoryFilter !== 'all' || headerSkillFilter !== 'all' || headerPriceSort !== 'none' || headerBookingsSort !== 'none' || headerStatusFilter !== 'all' || serviceSearchQuery) && (
+                <button
+                  className="sh-btn sh-btn-sm sh-btn-ghost"
+                  style={{ color: 'var(--coral)', fontSize: 12 }}
+                  onClick={() => {
+                    setServiceCategoryFilter('all');
+                    setHeaderSkillFilter('all');
+                    setHeaderPriceSort('none');
+                    setHeaderBookingsSort('none');
+                    setHeaderStatusFilter('all');
+                    setServiceSearchQuery('');
+                  }}
+                >
+                  Clear All Filters ✕
+                </button>
+              )}
             </div>
             
             <table className="sh-table">
               <thead>
-                <tr>
-                  <th>Service Name</th>
-                  <th>Tier-1 Category</th>
-                  <th>Subcategory / Skill</th>
-                  <th>Starting Price</th>
-                  <th>Bookings</th>
-                  <th>Status & Actions</th>
+                <tr style={{ background: 'var(--surface-tint)' }}>
+                  <th style={{ padding: '12px 14px', minWidth: 200 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--ink-soft)' }}>
+                      Service Name
+                    </div>
+                  </th>
+
+                  <th style={{ padding: '12px 14px', minWidth: 190 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--ink-soft)' }}>
+                        Tier-1 Category
+                      </span>
+                      <select
+                        className="sh-input"
+                        value={serviceCategoryFilter}
+                        onChange={e => setServiceCategoryFilter(e.target.value)}
+                        style={{
+                          fontSize: 11, fontWeight: 600, padding: '3px 6px', height: 28, borderRadius: 6,
+                          background: serviceCategoryFilter !== 'all' ? 'var(--teal-tint)' : 'var(--bg)',
+                          borderColor: serviceCategoryFilter !== 'all' ? 'var(--teal)' : 'var(--border)',
+                          color: serviceCategoryFilter !== 'all' ? 'var(--teal)' : 'inherit'
+                        }}
+                      >
+                        <option value="all">All Categories ({services.length})</option>
+                        {CATEGORIES_TIER1.map(cat => (
+                          <option key={cat.id} value={cat.name}>
+                            {cat.emoji} {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </th>
+
+                  <th style={{ padding: '12px 14px', minWidth: 170 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--ink-soft)' }}>
+                        Subcategory / Skill
+                      </span>
+                      <select
+                        className="sh-input"
+                        value={headerSkillFilter}
+                        onChange={e => setHeaderSkillFilter(e.target.value)}
+                        style={{
+                          fontSize: 11, fontWeight: 600, padding: '3px 6px', height: 28, borderRadius: 6,
+                          background: headerSkillFilter !== 'all' ? 'var(--teal-tint)' : 'var(--bg)',
+                          borderColor: headerSkillFilter !== 'all' ? 'var(--teal)' : 'var(--border)',
+                          color: headerSkillFilter !== 'all' ? 'var(--teal)' : 'inherit'
+                        }}
+                      >
+                        <option value="all">All Subcategories / Skills</option>
+                        {Array.from(new Set(services.flatMap(s => [s.skill, getServiceSubcategory(s)]).filter(Boolean))).sort().map(sk => (
+                          <option key={sk} value={sk}>{sk}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </th>
+
+                  <th style={{ padding: '12px 14px', minWidth: 140 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--ink-soft)' }}>
+                        Starting Price
+                      </span>
+                      <select
+                        className="sh-input"
+                        value={headerPriceSort}
+                        onChange={e => {
+                          setHeaderPriceSort(e.target.value);
+                          setHeaderBookingsSort('none');
+                        }}
+                        style={{
+                          fontSize: 11, fontWeight: 600, padding: '3px 6px', height: 28, borderRadius: 6,
+                          background: headerPriceSort !== 'none' ? 'var(--teal-tint)' : 'var(--bg)',
+                          borderColor: headerPriceSort !== 'none' ? 'var(--teal)' : 'var(--border)',
+                          color: headerPriceSort !== 'none' ? 'var(--teal)' : 'inherit'
+                        }}
+                      >
+                        <option value="none">Sort: Default</option>
+                        <option value="asc">Price: Low → High (₹↑)</option>
+                        <option value="desc">Price: High → Low (₹↓)</option>
+                      </select>
+                    </div>
+                  </th>
+
+                  <th style={{ padding: '12px 14px', minWidth: 140 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--ink-soft)' }}>
+                        Bookings
+                      </span>
+                      <select
+                        className="sh-input"
+                        value={headerBookingsSort}
+                        onChange={e => {
+                          setHeaderBookingsSort(e.target.value);
+                          setHeaderPriceSort('none');
+                        }}
+                        style={{
+                          fontSize: 11, fontWeight: 600, padding: '3px 6px', height: 28, borderRadius: 6,
+                          background: headerBookingsSort !== 'none' ? 'var(--teal-tint)' : 'var(--bg)',
+                          borderColor: headerBookingsSort !== 'none' ? 'var(--teal)' : 'var(--border)',
+                          color: headerBookingsSort !== 'none' ? 'var(--teal)' : 'inherit'
+                        }}
+                      >
+                        <option value="none">Sort: Default</option>
+                        <option value="desc">Most Booked (High → Low)</option>
+                        <option value="asc">Least Booked (Low → High)</option>
+                      </select>
+                    </div>
+                  </th>
+
+                  <th style={{ padding: '12px 14px', minWidth: 150 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--ink-soft)' }}>
+                        Status & Actions
+                      </span>
+                      <select
+                        className="sh-input"
+                        value={headerStatusFilter}
+                        onChange={e => setHeaderStatusFilter(e.target.value)}
+                        style={{
+                          fontSize: 11, fontWeight: 600, padding: '3px 6px', height: 28, borderRadius: 6,
+                          background: headerStatusFilter !== 'all' ? 'var(--teal-tint)' : 'var(--bg)',
+                          borderColor: headerStatusFilter !== 'all' ? 'var(--teal)' : 'var(--border)',
+                          color: headerStatusFilter !== 'all' ? 'var(--teal)' : 'inherit'
+                        }}
+                      >
+                        <option value="all">All Statuses</option>
+                        <option value="active">Active Only</option>
+                        <option value="inactive">Inactive Only</option>
+                      </select>
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {services
                   .filter(s => {
-                    const matchCat = serviceCategoryFilter === 'all' || s.category === serviceCategoryFilter;
+                    const catName = getServiceCategory(s);
+                    const subcat = getServiceSubcategory(s);
+                    
+                    const matchCat = serviceCategoryFilter === 'all' || catName === serviceCategoryFilter;
+                    
+                    const matchSkill = headerSkillFilter === 'all' || 
+                      s.skill === headerSkillFilter || 
+                      subcat === headerSkillFilter;
+                      
+                    const matchStatus = headerStatusFilter === 'all' || 
+                      (headerStatusFilter === 'active' && s.status !== 'inactive') ||
+                      (headerStatusFilter === 'inactive' && s.status === 'inactive');
+
                     const matchQuery = !serviceSearchQuery ||
                       s.name.toLowerCase().includes(serviceSearchQuery.toLowerCase()) ||
-                      (s.subCategory && s.subCategory.toLowerCase().includes(serviceSearchQuery.toLowerCase())) ||
-                      (s.skill && s.skill.toLowerCase().includes(serviceSearchQuery.toLowerCase()));
-                    return matchCat && matchQuery;
+                      subcat.toLowerCase().includes(serviceSearchQuery.toLowerCase()) ||
+                      (s.skill && s.skill.toLowerCase().includes(serviceSearchQuery.toLowerCase())) ||
+                      catName.toLowerCase().includes(serviceSearchQuery.toLowerCase());
+                      
+                    return matchCat && matchSkill && matchStatus && matchQuery;
+                  })
+                  .sort((a, b) => {
+                    if (headerPriceSort === 'asc') return (a.price || 0) - (b.price || 0);
+                    if (headerPriceSort === 'desc') return (b.price || 0) - (a.price || 0);
+                    
+                    const aBookings = parseInt(a.bookings || 0) || bookings.filter(bk => bk.serviceId === a.id).length;
+                    const bBookings = parseInt(b.bookings || 0) || bookings.filter(bk => bk.serviceId === b.id).length;
+                    if (headerBookingsSort === 'desc') return bBookings - aBookings;
+                    if (headerBookingsSort === 'asc') return aBookings - bBookings;
+                    
+                    return 0;
                   })
                   .map(s => {
                     const liveCount = bookings.filter(b => b.serviceId === s.id).length;
-                    const catObj = CATEGORIES_TIER1.find(c => c.name === s.category) || CATEGORIES_TIER1[0];
+                    const catName = getServiceCategory(s);
+                    const subcat = getServiceSubcategory(s);
+                    const catObj = CATEGORIES_TIER1.find(c => c.name === catName) || CATEGORIES_TIER1[0];
                     return (
                       <tr key={s.id}>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div className="sh-patch" style={{ width: 32, height: 32, background: 'var(--teal-tint)', borderRadius: 8 }}>
+                            <div className="sh-patch" style={{ width: 32, height: 32, background: 'var(--teal-tint)', borderRadius: 8, flexShrink: 0 }}>
                               <span style={{ fontSize: 16 }}>{catObj?.emoji || '🛠️'}</span>
                             </div>
                             <div>
@@ -897,19 +1097,19 @@ export default function AdminApp({
                         <td>
                           <span style={{
                             fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
-                            background: 'var(--teal-tint)', color: 'var(--teal)'
+                            background: 'var(--teal-tint)', color: 'var(--teal)', whiteSpace: 'nowrap'
                           }}>
-                            {s.category || 'Quick Repairs'}
+                            {catName}
                           </span>
                         </td>
                         <td>
                           <span style={{ fontSize: 12, fontWeight: 500 }}>
-                            {s.subCategory ? `${s.subCategory} · ` : ''}{s.skill}
+                            {subcat !== s.skill ? `${subcat} · ${s.skill}` : s.skill}
                           </span>
                         </td>
                         <td className="sh-price">₹{s.price}</td>
                         <td>
-                          <span style={{ fontWeight: 600 }}>{liveCount}</span> <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>live</span>
+                          <span style={{ fontWeight: 600 }}>{liveCount || s.bookings || 0}</span> <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>live</span>
                         </td>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
