@@ -166,12 +166,13 @@ function getPosterName(p, posterObj) {
   if (posterObj && posterObj.name && posterObj.name !== '-') return posterObj.name;
   
   const pName = p.postedBy || p.posted_by || p.contactName || p.contact_name || p.userName || p.user_name || p.customerName || p.customer_name || p.name;
-  if (pName && pName !== '-' && pName !== 'Customer') return pName;
+  if (pName && pName !== '-' && pName !== 'Customer' && pName !== 'Customer (+91)' && !pName.startsWith('Customer (')) return pName;
 
   const rawPhone = p.contactPhone || p.contact_phone || p.phone;
-  if (rawPhone && rawPhone !== '-') return `Customer (${rawPhone})`;
+  const digits = cleanDigits(rawPhone);
+  if (digits && digits.length >= 7) return `Customer (${rawPhone.trim()})`;
 
-  return 'Sahaya User';
+  return 'Customer';
 }
 
 const SIDEBAR_ITEMS = [
@@ -2345,11 +2346,66 @@ export default function AdminApp({
                     onChange={e => setEditingMarketPost({ ...editingMarketPost, price: parseInt(e.target.value) || 0 })}
                   />
                 </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Assign Posted Person (Registered Customer)</label>
+                <select
+                  className="sh-input"
+                  style={{ marginBottom: 6 }}
+                  value={(() => {
+                    const poster = findPosterForPost(editingMarketPost, users);
+                    return poster ? poster.id : '';
+                  })()}
+                  onChange={e => {
+                    const selId = e.target.value;
+                    const u = users.find(x => x.id === selId);
+                    if (u) {
+                      setEditingMarketPost(prev => ({
+                        ...prev,
+                        postedBy: u.name,
+                        posted_by: u.name,
+                        contactName: u.name,
+                        contact_name: u.name,
+                        contactPhone: u.phone,
+                        contact_phone: u.phone,
+                        userId: u.id,
+                        user_id: u.id
+                      }));
+                    }
+                  }}
+                >
+                  <option value="">-- Select Customer from Database --</option>
+                  {users.map(u => (
+                    <option key={u.id} value={u.id}>
+                      👤 {u.name} ({u.phone})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Posted Person Name</label>
+                  <input
+                    className="sh-input"
+                    placeholder="e.g. Sibin"
+                    value={editingMarketPost.postedBy || editingMarketPost.posted_by || editingMarketPost.contactName || editingMarketPost.contact_name || ''}
+                    onChange={e => setEditingMarketPost({
+                      ...editingMarketPost,
+                      postedBy: e.target.value,
+                      posted_by: e.target.value,
+                      contactName: e.target.value,
+                      contact_name: e.target.value
+                    })}
+                  />
+                </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Contact Phone</label>
                   <input
                     className="sh-input"
                     required
+                    placeholder="e.g. 8281189758"
                     value={editingMarketPost.contactPhone || editingMarketPost.contact_phone || ''}
                     onChange={e => setEditingMarketPost({ ...editingMarketPost, contact_phone: e.target.value, contactPhone: e.target.value })}
                   />
