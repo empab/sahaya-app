@@ -132,7 +132,7 @@ export default function App() {
       if (pData.length > 0) setProviders(pData);
       if (bData.length > 0) setBookings(bData.map(transformBooking));
       if (sData.length > 0) setServices(sData);
-      if (mData.length > 0) setMarketplacePostings(mData);
+      if (mData && mData.length >= 0) setMarketplacePostings(mData);
       if (cData.length > 0) {
         setUsers(cData.map(c => ({
           id: c.id,
