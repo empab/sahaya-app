@@ -129,6 +129,51 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return d.toFixed(2) + ' km';
 }
 
+function cleanDigits(val) {
+  if (!val) return '';
+  return String(val).replace(/\D/g, '');
+}
+
+function findPosterForPost(p, usersList = []) {
+  if (!p) return null;
+
+  const pUserId = p.user_id || p.userId;
+  if (pUserId) {
+    const matched = usersList.find(u => u.id === pUserId);
+    if (matched) return matched;
+  }
+
+  const rawPhone = p.contactPhone || p.contact_phone || p.phone;
+  const pDigits = cleanDigits(rawPhone);
+  if (pDigits && pDigits.length >= 7) {
+    const matched = usersList.find(u => {
+      const uDigits = cleanDigits(u.phone);
+      return uDigits.endsWith(pDigits) || pDigits.endsWith(uDigits);
+    });
+    if (matched) return matched;
+  }
+
+  const pName = p.postedBy || p.posted_by || p.contactName || p.contact_name || p.userName || p.user_name || p.customerName || p.customer_name || p.name;
+  if (pName && pName !== 'Customer' && pName !== '-') {
+    const matched = usersList.find(u => (u.name || '').toLowerCase() === String(pName).toLowerCase());
+    if (matched) return matched;
+  }
+
+  return null;
+}
+
+function getPosterName(p, posterObj) {
+  if (posterObj && posterObj.name && posterObj.name !== '-') return posterObj.name;
+  
+  const pName = p.postedBy || p.posted_by || p.contactName || p.contact_name || p.userName || p.user_name || p.customerName || p.customer_name || p.name;
+  if (pName && pName !== '-' && pName !== 'Customer') return pName;
+
+  const rawPhone = p.contactPhone || p.contact_phone || p.phone;
+  if (rawPhone && rawPhone !== '-') return `Customer (${rawPhone})`;
+
+  return 'Sahaya User';
+}
+
 const SIDEBAR_ITEMS = [
   { key: 'dashboard',   label: 'Dashboard',        icon: BarChart3 },
   { key: 'bookings',    label: 'Bookings',          icon: ClipboardList },
@@ -1633,8 +1678,8 @@ export default function AdminApp({
                       </td>
                       <td>{p.locationName || p.location_name || 'Calicut'}</td>
                       {(() => {
-                        const poster = users.find(u => u.phone === (p.contactPhone || p.contact_phone) || u.id === (p.userId || p.user_id));
-                        const posterName = p.postedBy || p.posted_by || p.customer_name || poster?.name || 'Customer';
+                        const poster = findPosterForPost(p, users);
+                        const posterName = getPosterName(p, poster);
                         const posterPhone = p.contactPhone || p.contact_phone || poster?.phone || '-';
                         const posterAvatar = poster?.avatarUrl || poster?.avatar_url || poster?.avatar || null;
                         return (
@@ -2448,8 +2493,8 @@ export default function AdminApp({
 
               {/* Posted Person Card */}
               {(() => {
-                const poster = users.find(u => u.phone === (previewImagePost.contactPhone || previewImagePost.contact_phone) || u.id === (previewImagePost.userId || previewImagePost.user_id));
-                const posterName = previewImagePost.postedBy || previewImagePost.posted_by || previewImagePost.customer_name || poster?.name || 'Customer';
+                const poster = findPosterForPost(previewImagePost, users);
+                const posterName = getPosterName(previewImagePost, poster);
                 const posterPhone = previewImagePost.contactPhone || previewImagePost.contact_phone || poster?.phone || '-';
                 const posterAvatar = poster?.avatarUrl || poster?.avatar_url || poster?.avatar || null;
                 return (
