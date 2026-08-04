@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
-  BarChart3, ClipboardList, LayoutGrid, Users, LogOut,
+  BarChart3, ClipboardList, LayoutGrid, Users, User, LogOut,
   Shield, Wallet, Briefcase, MapPin, Check, X,
   ShieldCheck, Star, Search, ChevronRight, ArrowLeft,
   ShoppingBag, Pencil, Trash2, Plus, Tag,
