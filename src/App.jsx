@@ -72,6 +72,7 @@ export default function App() {
           name: c.name || '-',
           email: c.email || '-',
           phone: c.phone || '-',
+          avatarUrl: c.avatar_url || c.avatar || c.photo_url || null,
           password: '*****',
           joined: c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
           lastLogin: 'Active',
@@ -138,6 +139,7 @@ export default function App() {
           name: c.name || '-',
           email: c.email || '-',
           phone: c.phone || '-',
+          avatarUrl: c.avatar_url || c.avatar || c.photo_url || null,
           password: '*****',
           joined: c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
           lastLogin: 'Active',
@@ -304,8 +306,41 @@ export default function App() {
     setMarketplacePostings(prev => prev.filter(p => p.id !== id));
   }
 
+  async function updateUser(id, patch) {
+    try {
+      const dbPatch = {};
+      if (patch.name !== undefined) dbPatch.name = patch.name;
+      if (patch.phone !== undefined) dbPatch.phone = patch.phone;
+      if (patch.email !== undefined) dbPatch.email = patch.email;
+      const imgVal = patch.avatarUrl || patch.avatar_url || patch.avatar;
+      if (imgVal !== undefined) {
+        dbPatch.avatar_url = imgVal;
+        dbPatch.avatar = imgVal;
+      }
+
+      const { error } = await supabase.from('customers').update(dbPatch).eq('id', id);
+      if (error) {
+        // Fallback retry without avatar_url if schema lacks column
+        delete dbPatch.avatar_url;
+        await supabase.from('customers').update(dbPatch).eq('id', id);
+      }
+    } catch (e) {
+      console.log('User update error', e);
+    }
+    setUsers(prev => prev.map(u => (u.id === id ? { ...u, ...patch } : u)));
+  }
+
+  async function deleteUser(id) {
+    try {
+      await supabase.from('customers').delete().eq('id', id);
+    } catch (e) {
+      console.log('User delete error', e);
+    }
+    setUsers(prev => prev.filter(u => u.id !== id));
+  }
+
   const sharedProps = { 
-    bookings, updateBooking, providers, updateProvider, addProvider, users, services, addService, updateService, session,
+    bookings, updateBooking, providers, updateProvider, addProvider, users, updateUser, deleteUser, services, addService, updateService, session,
     marketplacePostings, addMarketplacePosting, updateMarketplacePosting, deleteMarketplacePosting
   };
 

@@ -141,7 +141,7 @@ const SIDEBAR_ITEMS = [
 
 
 export default function AdminApp({
-  providers = [], bookings = [], users = [], services = [], updateBooking, updateProvider, addProvider, addService, updateService,
+  providers = [], bookings = [], users = [], updateUser, deleteUser, services = [], updateBooking, updateProvider, addProvider, addService, updateService,
   marketplacePostings = [], addMarketplacePosting, updateMarketplacePosting, deleteMarketplacePosting, onExit
 }) {
   const [authed,         setAuthed]         = useState(() => localStorage.getItem('sh_admin_auth') === 'true');
@@ -173,6 +173,12 @@ export default function AdminApp({
   }, []);
   const [bookingFilter,  setBookingFilter]  = useState('all');
   const [bookingSearch,  setBookingSearch]  = useState('');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userDetail,      setUserDetail]      = useState(null);
+  const [editingUser,    setEditingUser]    = useState(null);
+  const [userPhotoUploading, setUserPhotoUploading] = useState(false);
+  const userPhotoInputRef = useRef(null);
+
   const [providerDetail, setProviderDetail] = useState(null);
   const [showCreateProvider, setShowCreateProvider] = useState(false);
   const [newProvider, setNewProvider] = useState({ name: '', phone: '', email: '', address: '', aadhaar_number: '', skill: 'House Help', price: '', username: '', password: '' });
@@ -253,6 +259,49 @@ export default function AdminApp({
   function handleDeleteMarketPost(id) {
     if (window.confirm('Are you sure you want to delete this marketplace posting?')) {
       deleteMarketplacePosting?.(id);
+    }
+  }
+
+  async function handleUserAvatarUpload(file) {
+    if (!file || !editingUser) return;
+    setUserPhotoUploading(true);
+    try {
+      const url = await uploadMarketPhoto(file);
+      if (url) {
+        setEditingUser(prev => ({ ...prev, avatarUrl: url, avatar_url: url }));
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const base64 = e.target.result;
+          setEditingUser(prev => ({ ...prev, avatarUrl: base64, avatar_url: base64 }));
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      console.error('User photo upload error:', err);
+    } finally {
+      setUserPhotoUploading(false);
+    }
+  }
+
+  function handleSaveUserProfile(e) {
+    e.preventDefault();
+    if (!editingUser) return;
+    updateUser?.(editingUser.id, {
+      name: editingUser.name,
+      phone: editingUser.phone,
+      email: editingUser.email,
+      avatarUrl: editingUser.avatarUrl || editingUser.avatar_url || '',
+      avatar_url: editingUser.avatarUrl || editingUser.avatar_url || '',
+    });
+    setEditingUser(null);
+    alert('User profile updated successfully!');
+  }
+
+  function handleDeleteUserAccount(id, name) {
+    if (window.confirm(`Are you sure you want to delete customer account "${name}"? This action cannot be undone.`)) {
+      deleteUser?.(id);
+      if (editingUser?.id === id) setEditingUser(null);
     }
   }
 
@@ -372,6 +421,176 @@ export default function AdminApp({
   }
 
 
+
+  /* Customer / User detail view */
+  if (userDetail !== null) {
+    const u = users.find(x => x.id === userDetail) || userDetail;
+    const userBookings = bookings.filter(b => b.phone === u.phone || b.customerName === u.name);
+    const userTotalSpent = userBookings.reduce((sum, b) => sum + (parseFloat(b.price) || 0), 0);
+    const userMarketPosts = (marketplacePostings || []).filter(p => p.contactPhone === u.phone || p.contact_phone === u.phone);
+
+    return (
+      <div className="sh-admin-shell">
+        <Sidebar section={section} setSection={s => { setSection(s); setUserDetail(null); setProviderDetail(null); }} onExit={onExit} />
+        <div className="sh-admin-main">
+          {/* Header Bar */}
+          <div className="sh-admin-header">
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <button className="sh-btn sh-btn-ghost sh-btn-sm" style={{ width: 'auto' }}
+                onClick={() => setUserDetail(null)}>
+                <ArrowLeft size={14} /> Back to Customers
+              </button>
+              <div>
+                <h2 className="sh-section-title">Customer Profile: {u.name}</h2>
+                <p className="sh-section-sub" style={{ margin: 0 }}>Registered Customer Account #{u.id?.slice?.(0, 8) || u.id}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Customer Profile Banner Card */}
+          <div className="sh-card" style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+              <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                <div style={{
+                  position: 'relative', width: 80, height: 80, borderRadius: '50%',
+                  overflow: 'hidden', flexShrink: 0, border: '3px solid var(--teal)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)', background: 'var(--teal-tint)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                  {(u.avatarUrl || u.avatar_url || u.avatar) ? (
+                    <img src={u.avatarUrl || u.avatar_url || u.avatar} alt={u.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--teal-dark)', fontWeight: 800, fontSize: 28 }}>
+                      {(u.name || 'U')[0].toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>{u.name}</h3>
+                  <div style={{ fontSize: 13, color: 'var(--text-light)', marginTop: 4 }}>
+                    📞 {u.phone} &bull; ✉️ {u.email || 'No email registered'}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 4 }}>
+                    📅 Member Joined: <b>{u.joined}</b> &bull; Status: <b style={{ color: 'green' }}>Active Customer</b>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  className="sh-btn sh-btn-primary sh-btn-sm"
+                  onClick={() => setEditingUser(u)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Pencil size={14} /> Edit Customer Profile
+                </button>
+                <button
+                  className="sh-btn sh-btn-sm"
+                  style={{ background: '#ffe3e3', color: '#e03131', border: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
+                  onClick={() => handleDeleteUserAccount(u.id, u.name)}
+                >
+                  <Trash2 size={14} /> Delete Account
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+              <div><strong>Customer ID:</strong> {u.id}</div>
+              <div><strong>Phone Number:</strong> {u.phone}</div>
+              <div><strong>Email Address:</strong> {u.email || '—'}</div>
+              <div><strong>Account Password:</strong> {u.password || '******'}</div>
+              <div><strong>Registered Date:</strong> {u.joined}</div>
+              <div><strong>Account Status:</strong> <span className="sh-pill" style={{ background: '#e6f4f1', color: '#0f9384', fontWeight: 700 }}>Active</span></div>
+            </div>
+          </div>
+
+          {/* Customer Activity KPIs */}
+          <div className="sh-kpi-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)', marginBottom: 20 }}>
+            <div className="sh-kpi-card">
+              <div className="sh-kpi-label"><ClipboardList size={13} /> Bookings Made</div>
+              <div className="sh-kpi-value">{userBookings.length}</div>
+            </div>
+            <div className="sh-kpi-card">
+              <div className="sh-kpi-label"><Wallet size={13} /> Total Amount Spent</div>
+              <div className="sh-kpi-value">₹{userTotalSpent.toLocaleString('en-IN')}</div>
+            </div>
+            <div className="sh-kpi-card">
+              <div className="sh-kpi-label"><ShoppingBag size={13} /> Community Posts</div>
+              <div className="sh-kpi-value">{userMarketPosts.length}</div>
+            </div>
+            <div className="sh-kpi-card">
+              <div className="sh-kpi-label"><Check size={13} /> Account Status</div>
+              <div className="sh-kpi-value" style={{ fontSize: 16, color: 'var(--green)' }}>Verified Customer</div>
+            </div>
+          </div>
+
+          {/* Customer Booking History Table */}
+          <div style={{ marginBottom: 24 }}>
+            <p className="sh-section-title" style={{ fontSize: 16 }}>Booking History</p>
+            <p className="sh-section-sub">{userBookings.length} bookings placed by this customer</p>
+            {userBookings.length === 0 ? (
+              <div className="sh-empty">No bookings placed by this customer yet.</div>
+            ) : (
+              <table className="sh-table">
+                <thead>
+                  <tr>
+                    <th>Booking ID</th>
+                    <th>Service Name</th>
+                    <th>Date & Time</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Provider</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {userBookings.map(b => (
+                    <tr key={b.id}>
+                      <td style={{ fontWeight: 600 }}>#{b.id}</td>
+                      <td>{b.serviceName}</td>
+                      <td>{b.date} {b.time}</td>
+                      <td className="sh-price">₹{b.price}</td>
+                      <td><StatusPill status={b.status} /></td>
+                      <td>{b.providerId ? `Provider #${b.providerId}` : 'Unassigned'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Customer Marketplace Postings */}
+          {userMarketPosts.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <p className="sh-section-title" style={{ fontSize: 16 }}>Marketplace Listings & Requirements</p>
+              <p className="sh-section-sub">{userMarketPosts.length} posts created in community marketplace</p>
+              <table className="sh-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Price / Budget</th>
+                    <th>Location</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {userMarketPosts.map(m => (
+                    <tr key={m.id}>
+                      <td style={{ fontWeight: 600 }}>{m.title}</td>
+                      <td>{m.type === 'requirement' ? '📢 Requirement' : '🛍️ For Sale'}</td>
+                      <td>{m.category}</td>
+                      <td style={{ fontWeight: 700, color: 'var(--teal-dark)' }}>₹{m.price}</td>
+                      <td>{m.locationName || m.location_name || 'Calicut'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   /* Provider detail view */
   if (providerDetail !== null) {
@@ -1181,39 +1400,123 @@ export default function AdminApp({
         {/* ---- USERS ---- */}
         {section === 'users' && (
           <>
-            <h2 className="sh-section-title">Customers</h2>
-            <p className="sh-section-sub">People booking services through Sahaya</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div>
+                <h2 className="sh-section-title">Customer Profiles & User Management</h2>
+                <p className="sh-section-sub">View, search, edit customer details and manage profile pictures</p>
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal-dark)', background: 'var(--teal-tint)', padding: '6px 14px', borderRadius: 20 }}>
+                👥 {users.length} Registered Customers
+              </div>
+            </div>
+
+            {/* Search Bar */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 20, alignItems: 'center' }}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <Search size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-light)' }} />
+                <input
+                  type="text"
+                  className="sh-input"
+                  style={{ paddingLeft: 36 }}
+                  placeholder="Search customers by name, phone number, or email..."
+                  value={userSearchQuery}
+                  onChange={e => setUserSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
             <table className="sh-table">
               <thead>
                 <tr>
-                  <th>Customer</th>
+                  <th>Customer Profile</th>
                   <th>Phone</th>
-                  <th>Mail id</th>
-                  <th>Password</th>
+                  <th>Email</th>
                   <th>Joined</th>
-                  <th>Last Log in date</th>
-                  <th>Bookings made</th>
+                  <th>Bookings Made</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {users.map(u => (
-                  <tr key={u.id}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div className="sh-avatar" style={{ width: 26, height: 26, fontSize: 10 }}>
-                          {(u?.name || 'U').split(' ').map(n => n ? n[0] : '').filter(Boolean).slice(0, 2).join('') || 'U'}
+                {users
+                  .filter(u => {
+                    const q = userSearchQuery.toLowerCase();
+                    return (u.name || '').toLowerCase().includes(q) ||
+                           (u.phone || '').toLowerCase().includes(q) ||
+                           (u.email || '').toLowerCase().includes(q);
+                  })
+                  .map(u => (
+                    <tr key={u.id}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div
+                            style={{
+                              position: 'relative', width: 36, height: 36, borderRadius: '50%',
+                              overflow: 'hidden', flexShrink: 0, border: '2px solid var(--teal-light, #ccece6)',
+                              background: 'var(--teal-tint, #e6f4f1)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}
+                          >
+                            {(u.avatarUrl || u.avatar_url || u.avatar) ? (
+                              <img
+                                src={u.avatarUrl || u.avatar_url || u.avatar}
+                                alt={u.name}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                onError={e => { e.target.style.display = 'none'; if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }}
+                              />
+                            ) : null}
+                            <div
+                              style={{
+                                display: (u.avatarUrl || u.avatar_url || u.avatar) ? 'none' : 'flex',
+                                width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center',
+                                color: 'var(--teal-dark, #0f9384)', fontWeight: 700, fontSize: 12
+                              }}
+                            >
+                              {(u?.name || 'U').split(' ').map(n => n ? n[0] : '').filter(Boolean).slice(0, 2).join('') || 'U'}
+                            </div>
+                          </div>
+                          <div style={{ cursor: 'pointer' }} onClick={() => setUserDetail(u.id)}>
+                            <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--teal-dark)' }}>{u.name}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-light)' }}>ID: #{u.id?.slice?.(0, 8) || u.id}</div>
+                          </div>
                         </div>
-                        {u.name}
-                      </div>
-                    </td>
-                    <td>{u.phone}</td>
-                    <td>{u.email || '-'}</td>
-                    <td>{u.password || '******'}</td>
-                    <td>{u.joined}</td>
-                    <td>{u.lastLogin || '-'}</td>
-                    <td>{u.bookingsCount}</td>
-                  </tr>
-                ))}
+                      </td>
+                      <td style={{ fontWeight: 500 }}>{u.phone}</td>
+                      <td>{u.email || '-'}</td>
+                      <td>{u.joined}</td>
+                      <td>
+                        <span style={{ fontWeight: 700, color: 'var(--teal-dark)', background: '#eef2ff', padding: '3px 8px', borderRadius: 12, fontSize: 12 }}>
+                          {u.bookingsCount} orders
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            className="sh-btn sh-btn-sm sh-btn-ghost"
+                            style={{ padding: '6px 10px', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                            onClick={() => setUserDetail(u.id)}
+                            title="View Customer Profile Screen"
+                          >
+                            <Eye size={13} color="var(--teal)" /> View Profile
+                          </button>
+                          <button
+                            className="sh-btn sh-btn-sm sh-btn-ghost"
+                            style={{ padding: '6px 10px', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                            onClick={() => setEditingUser(u)}
+                            title="Edit Profile"
+                          >
+                            <Pencil size={13} /> Edit
+                          </button>
+                          <button
+                            className="sh-btn sh-btn-sm"
+                            style={{ padding: '6px 10px', background: '#ffe3e3', color: '#e03131', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                            onClick={() => handleDeleteUserAccount(u.id, u.name)}
+                            title="Delete User"
+                          >
+                            <Trash2 size={13} /> Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </>
@@ -1264,7 +1567,7 @@ export default function AdminApp({
                   <th>Type & Category</th>
                   <th>Price / Budget</th>
                   <th>Location</th>
-                  <th>Contact Phone</th>
+                  <th>Posted Person Details</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -1329,7 +1632,41 @@ export default function AdminApp({
                         ₹{(p.price || 0).toLocaleString('en-IN')}
                       </td>
                       <td>{p.locationName || p.location_name || 'Calicut'}</td>
-                      <td>{p.contactPhone || p.contact_phone || '-'}</td>
+                      {(() => {
+                        const poster = users.find(u => u.phone === (p.contactPhone || p.contact_phone) || u.id === (p.userId || p.user_id));
+                        const posterName = p.postedBy || p.posted_by || p.customer_name || poster?.name || 'Customer';
+                        const posterPhone = p.contactPhone || p.contact_phone || poster?.phone || '-';
+                        const posterAvatar = poster?.avatarUrl || poster?.avatar_url || poster?.avatar || null;
+                        return (
+                          <td>
+                            <div
+                              style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: poster ? 'pointer' : 'default' }}
+                              onClick={() => poster && setUserDetail(poster.id)}
+                              title={poster ? `Click to view ${posterName}'s full Customer Profile` : ''}
+                            >
+                              <div
+                                style={{
+                                  width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
+                                  border: '1.5px solid var(--teal-light, #ccece6)', background: 'var(--teal-tint, #e6f4f1)',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                }}
+                              >
+                                {posterAvatar ? (
+                                  <img src={posterAvatar} alt={posterName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                  <div style={{ color: 'var(--teal-dark, #0f9384)', fontWeight: 700, fontSize: 12 }}>
+                                    {(posterName || 'U').split(' ').map(n => n ? n[0] : '').filter(Boolean).slice(0, 2).join('') || 'U'}
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 600, fontSize: 13, color: poster ? 'var(--teal-dark)' : 'inherit' }}>{posterName}</div>
+                                <div style={{ fontSize: 11, color: 'var(--text-light)' }}>{posterPhone}</div>
+                              </div>
+                            </div>
+                          </td>
+                        );
+                      })()}
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button
@@ -2109,6 +2446,46 @@ export default function AdminApp({
                 </div>
               </div>
 
+              {/* Posted Person Card */}
+              {(() => {
+                const poster = users.find(u => u.phone === (previewImagePost.contactPhone || previewImagePost.contact_phone) || u.id === (previewImagePost.userId || previewImagePost.user_id));
+                const posterName = previewImagePost.postedBy || previewImagePost.posted_by || previewImagePost.customer_name || poster?.name || 'Customer';
+                const posterPhone = previewImagePost.contactPhone || previewImagePost.contact_phone || poster?.phone || '-';
+                const posterAvatar = poster?.avatarUrl || poster?.avatar_url || poster?.avatar || null;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '2px solid var(--teal)', background: 'var(--teal-tint)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {posterAvatar ? (
+                          <img src={posterAvatar} alt={posterName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ color: 'var(--teal-dark)', fontWeight: 800, fontSize: 14 }}>
+                            {(posterName || 'U')[0].toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--text-light)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Posted By Customer</div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{posterName}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-light)' }}>📞 {posterPhone}</div>
+                      </div>
+                    </div>
+                    {poster && (
+                      <button
+                        className="sh-btn sh-btn-ghost sh-btn-sm"
+                        style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                        onClick={() => {
+                          setPreviewImagePost(null);
+                          setUserDetail(poster.id);
+                        }}
+                      >
+                        <User size={13} color="var(--teal)" /> View Profile
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div style={{ background: '#f8f9fa', padding: 12, borderRadius: 8, fontSize: 12, fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: 16, color: '#495057' }}>
                 {previewImagePost.imageUrl || previewImagePost.image_url || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80'}
               </div>
@@ -2148,6 +2525,169 @@ export default function AdminApp({
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Profile & Activity Modal */}
+      {editingUser && (
+        <div className="sh-modal-backdrop">
+          <div className="sh-modal" style={{ maxWidth: 600, padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+              <div>
+                <h2 className="sh-section-title">Customer Profile Management</h2>
+                <p className="sh-section-sub" style={{ margin: 0 }}>View and update details or review booking history for customer #{editingUser.id?.slice?.(0, 8) || editingUser.id}</p>
+              </div>
+              <button
+                className="sh-btn sh-btn-ghost sh-btn-sm"
+                onClick={() => setEditingUser(null)}
+                style={{ padding: '4px 8px' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Profile Picture Header & Change Upload */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: '#f8fafc', padding: 16, borderRadius: 12, marginBottom: 20, border: '1px solid var(--border)' }}>
+              <div
+                onClick={() => !userPhotoUploading && userPhotoInputRef.current?.click()}
+                style={{ position: 'relative', width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', flexShrink: 0, border: '2px solid var(--teal)', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                title="Click to change profile picture"
+              >
+                {(editingUser.avatarUrl || editingUser.avatar_url || editingUser.avatar) ? (
+                  <img
+                    src={editingUser.avatarUrl || editingUser.avatar_url || editingUser.avatar}
+                    alt={editingUser.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', background: 'var(--teal-dark)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 24 }}>
+                    {(editingUser.name || 'U')[0].toUpperCase()}
+                  </div>
+                )}
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }}
+                     onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                     onMouseLeave={e => e.currentTarget.style.opacity = '0'}
+                >
+                  <Camera size={18} color="#fff" />
+                </div>
+              </div>
+              <input
+                ref={userPhotoInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleUserAvatarUpload(f); e.target.value = ''; }}
+              />
+
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>{editingUser.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 2 }}>{editingUser.phone} &bull; {editingUser.email || 'No email set'}</div>
+                <button
+                  type="button"
+                  className="sh-btn sh-btn-ghost sh-btn-sm"
+                  style={{ marginTop: 6, fontSize: 11, padding: '3px 8px' }}
+                  onClick={() => userPhotoInputRef.current?.click()}
+                >
+                  <Camera size={12} /> {userPhotoUploading ? 'Uploading Photo...' : 'Upload New Profile Photo'}
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveUserProfile} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Full Name</label>
+                  <input
+                    required
+                    className="sh-input"
+                    value={editingUser.name || ''}
+                    onChange={e => setEditingUser({ ...editingUser, name: e.target.value })}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Phone Number</label>
+                  <input
+                    required
+                    type="tel"
+                    className="sh-input"
+                    value={editingUser.phone || ''}
+                    onChange={e => setEditingUser({ ...editingUser, phone: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Email Address</label>
+                <input
+                  type="email"
+                  className="sh-input"
+                  value={editingUser.email || ''}
+                  onChange={e => setEditingUser({ ...editingUser, email: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)' }}>Profile Picture URL</label>
+                <input
+                  type="text"
+                  className="sh-input"
+                  placeholder="https://... or data:image/..."
+                  value={editingUser.avatarUrl || editingUser.avatar_url || ''}
+                  onChange={e => setEditingUser({ ...editingUser, avatarUrl: e.target.value, avatar_url: e.target.value })}
+                />
+              </div>
+
+              {/* Booking Activity Section */}
+              <div style={{ marginTop: 10 }}>
+                <h4 style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700 }}>Customer Booking History</h4>
+                {(() => {
+                  const userBookings = bookings.filter(b => b.phone === editingUser.phone || b.customerName === editingUser.name);
+                  if (userBookings.length === 0) {
+                    return <div style={{ fontSize: 12, color: 'var(--text-light)', fontStyle: 'italic' }}>No bookings placed by this user yet.</div>;
+                  }
+                  return (
+                    <div style={{ maxHeight: 150, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 8 }}>
+                      <table className="sh-table" style={{ margin: 0, fontSize: 12 }}>
+                        <thead>
+                          <tr>
+                            <th>Date & Time</th>
+                            <th>Service</th>
+                            <th>Status</th>
+                            <th>Price</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {userBookings.map(b => (
+                            <tr key={b.id}>
+                              <td>{b.date} {b.time}</td>
+                              <td style={{ fontWeight: 600 }}>{b.serviceName}</td>
+                              <td><StatusPill status={b.status} /></td>
+                              <td style={{ fontWeight: 700 }}>₹{b.price}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+                <button
+                  type="button"
+                  className="sh-btn sh-btn-sm"
+                  style={{ background: '#ffe3e3', color: '#e03131', border: 'none' }}
+                  onClick={() => handleDeleteUserAccount(editingUser.id, editingUser.name)}
+                >
+                  Delete Account
+                </button>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button type="button" className="sh-btn" onClick={() => setEditingUser(null)}>Cancel</button>
+                  <button type="submit" className="sh-btn sh-btn-primary">Save Profile Changes</button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       )}
